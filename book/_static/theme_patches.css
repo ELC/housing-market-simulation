@@ -1,0 +1,64 @@
+div.cell details.above-input>summary {
+    border: var(--mystnb-source-border-width) var(--mystnb-source-border-color) solid;
+    padding: 0.5em 1em;
+}
+
+div.cell details.above-input div.cell_input {
+    border-top: 0;
+}
+
+.thebelab-button {
+    padding: 0.1em 1.2em;
+    margin: 0px 0.1em;
+    text-transform: capitalize;
+}
+
+button.thebelab-button.thebelab-run-button {
+    margin-left: 1em;
+}
+
+.thebelab-busy {
+    scale: 1.5;
+    margin-left: 0.5em;
+}
+
+.thebe-launch-button {
+    margin: 0 0 1em auto;
+    display: block;
+    padding: 0.5em 1.54em;
+    height: auto !important;
+    border: var(--mystnb-source-border-width) var(--mystnb-source-border-color) solid;
+}
+
+.bd-article-container img {
+    cursor: pointer;
+}
+
+p {
+    text-align: justify;
+}
+
+.dropdown-menu {
+    display: hidden
+}
+
+.thebelab-cell .thebelab-input {
+    padding-left: 12px !important;
+}
+
+.thebelab-cell {
+    margin-top: 5px !important;
+}
+
+.thebelab-button {
+    margin: 0px 1em;
+}
+
+html[data-theme="dark"] pre {
+    color: #dddddd;
+}
+
+.thebelab-button {
+    width: min(12em, 80%);
+    margin: 0.5em 1em;
+}

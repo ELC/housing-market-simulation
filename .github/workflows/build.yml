@@ -23,7 +23,7 @@ jobs:
       run: uv sync --all-groups
 
     - name: Build the book
-      run: uv run jb build . --path-output .
+      run: uv run jb build book --path-output .
 
     - name: Rename Output to _site
       run: mv _build/html ./_site

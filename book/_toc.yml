@@ -6,6 +6,10 @@ options:
   numbered: 3
 
 parts:
+- caption: Simulation
+  chapters:
+    - file: chapters/03_simulation
+
 - caption: Markdown Cheat Sheet
   chapters:
     - file: chapters/01_markdown

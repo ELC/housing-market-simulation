@@ -1,6 +1,6 @@
-title: "(REPLACE WITH Book Title)"
-copyright: '(REPLACE WITH Current Year), (REPLACE WITH Author Name)'
-author: '(REPLACE WITH Author Name)'
+title: "Housing Market Simulation"
+copyright: '2026, Ezequiel Leonardo Castaño'
+author: 'Ezequiel Leonardo Castaño'
 
 execute:
   execute_notebooks: "force"
@@ -8,10 +8,10 @@ execute:
 html:
   use_edit_page_button : true
   use_repository_button: true
-  baseurl              : (REPLACE WITH Project URL)
+  baseurl              : 'https://elc.github.io/housing-market-simulation'
 
 repository:
-  url: (REPLACE WITH Repository URL)
+  url: 'https://github.com/elc/housing-market-simulation'
   branch: source
 
 launch_buttons:

@@ -1,0 +1,18 @@
+[project]
+name = "housing-market-simulation"
+version = "0.1.0"
+description = "Housing Market Simulation"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "jupyter-book<2",
+    "matplotlib>=3.10.8",
+    "pandas>=3.0.1",
+    "pandera>=0.30.1",
+    "seaborn>=0.13.2",
+]
+
+[dependency-groups]
+dev = [
+    "wheel>=0.46.3",
+]

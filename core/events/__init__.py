@@ -3,9 +3,11 @@ from core.events.base import ApplyResult, Event
 from core.events.bid import Bid
 from core.events.eviction import Evicted
 from core.events.income import AgentIncomeReceived
-from core.events.rent import RentPaid, RentStarted
+from core.events.rent import RentCollected, RentDue, RentStarted
 
-EventType = AgentIncomeReceived | RentStarted | RentPaid | Evicted | Bid | AuctionClear
+EventType = (
+    AgentIncomeReceived | RentStarted | RentCollected | RentDue | Evicted | Bid | AuctionClear
+)
 
 __all__ = [
     "AgentIncomeReceived",
@@ -15,6 +17,7 @@ __all__ = [
     "Event",
     "EventType",
     "Evicted",
-    "RentPaid",
+    "RentCollected",
+    "RentDue",
     "RentStarted",
 ]

@@ -20,17 +20,41 @@ class RentStarted(Event):
         updated_house = house.model_copy(
             update={"state": RentedState(occupant_id=self.tenant_id)}
         )
-        rent_event = RentPaid(
+        due = RentDue(
             time=self.time,
             house_id=self.house_id,
             tenant_id=self.tenant_id,
             amount=house.rent_price,
         )
         new_market = market.update_entities({house.id: updated_house})
-        return new_market, [rent_event]
+        return new_market, [due]
 
 
-class RentPaid(Event):
+class RentCollected(Event):
+    house_id: str
+    tenant_id: str
+    amount: float
+
+    def apply(self, market: "HousingMarket") -> ApplyResult:
+        house = market.house_map[self.house_id]
+        owner = market.agent_map[house.owner_id]
+        tenant = market.agent_map[self.tenant_id]
+
+        updated = {
+            tenant.id: tenant.model_copy(update={"money": tenant.money - self.amount}),
+            owner.id: owner.model_copy(update={"money": owner.money + self.amount}),
+        }
+        new_market = market.update_entities(updated)
+        next_due = RentDue(
+            time=self.time + 1,
+            house_id=self.house_id,
+            tenant_id=self.tenant_id,
+            amount=self.amount,
+        )
+        return new_market, [next_due]
+
+
+class RentDue(Event):
     house_id: str
     tenant_id: str
     amount: float
@@ -42,21 +66,18 @@ class RentPaid(Event):
     def apply(self, market: "HousingMarket") -> ApplyResult:
         from core.events.eviction import Evicted
 
-        house = market.house_map[self.house_id]
-        owner = market.agent_map[house.owner_id]
         tenant = market.agent_map[self.tenant_id]
 
         if tenant.money < self.amount:
-            eviction = Evicted(
-                time=self.time, house_id=self.house_id, tenant_id=self.tenant_id
-            )
-            return market, [eviction]
+            return market, [
+                Evicted(time=self.time, house_id=self.house_id, tenant_id=self.tenant_id),
+            ]
 
-        updated_agents = {
-            tenant.id: tenant.model_copy(update={"money": tenant.money - self.amount}),
-            owner.id: owner.model_copy(update={"money": owner.money + self.amount}),
-        }
-
-        new_market = market.update_entities(updated_agents)
-        next_rent = self.model_copy(update={"time": self.time + 1})
-        return new_market, [next_rent]
+        return market, [
+            RentCollected(
+                time=self.time,
+                house_id=self.house_id,
+                tenant_id=self.tenant_id,
+                amount=self.amount,
+            ),
+        ]

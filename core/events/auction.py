@@ -14,7 +14,6 @@ if TYPE_CHECKING:
 
 
 class AuctionClear(Event):
-
     def invalidates(self) -> set[Signal]:
         return {Signal.MARKET_RENT, Signal.HOMELESSNESS}
 
@@ -22,16 +21,12 @@ class AuctionClear(Event):
         bids_by_house = self._group_bids(market)
         updated_houses: dict[str, House] = {}
         events: list = []
-        matched: set[str] = {
-            occ for h in market.houses if (occ := h.occupant_id())
-        }
+        matched: set[str] = {occ for h in market.houses if (occ := h.occupant_id())}
 
         for house in market.houses:
             match house.state:
                 case VacantState():
-                    result = self._handle_vacant(
-                        house, bids_by_house, market, matched
-                    )
+                    result = self._handle_vacant(house, bids_by_house, market, matched)
                     updated_houses[house.id] = result.house
                     events.extend(result.events)
 
@@ -59,9 +54,7 @@ class AuctionClear(Event):
     ) -> "_AuctionResult":
         bids = bids_by_house.get(house.id, [])
         valid = [
-            b
-            for b in bids
-            if b.price >= house.rent_price and b.agent_id not in matched
+            b for b in bids if b.price >= house.rent_price and b.agent_id not in matched
         ]
 
         if not valid:
@@ -73,12 +66,16 @@ class AuctionClear(Event):
         sorted_bids = sorted(valid, key=lambda b: b.price, reverse=True)
         winner = sorted_bids[0]
 
+        second_price = sorted_bids[1].price if len(sorted_bids) > 1 else house.rent_price
+        clearing_price = max(second_price, house.rent_price)
+        updated = house.model_copy(update={"rent_price": clearing_price})
+
         matched.add(winner.agent_id)
         rent_event = RentStarted(
             time=self.time, house_id=house.id, tenant_id=winner.agent_id
         )
 
-        return _AuctionResult(house, [rent_event])
+        return _AuctionResult(updated, [rent_event])
 
     def _handle_construction(self, house: House) -> House:
         state = house.state
@@ -87,11 +84,7 @@ class AuctionClear(Event):
                 update={"state": VacantState(last_update_time=self.time)}
             )
         return house.model_copy(
-            update={
-                "state": ConstructionState(
-                    remaining_time=state.remaining_time - 1
-                )
-            }
+            update={"state": ConstructionState(remaining_time=state.remaining_time - 1)}
         )
 
 

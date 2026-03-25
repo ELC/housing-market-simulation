@@ -10,7 +10,8 @@ from core.events import (
     Event,
     EventType,
     Evicted,
-    RentPaid,
+    RentCollected,
+    RentDue,
     RentStarted,
 )
 from core.house import (
@@ -56,7 +57,8 @@ __all__ = [
     "IncomePolicy",
     "OwnerOccupiedState",
     "QueueItem",
-    "RentPaid",
+    "RentCollected",
+    "RentDue",
     "RentStarted",
     "RentedState",
     "Signal",

@@ -12,7 +12,7 @@ html:
 
 repository:
   url: 'https://github.com/elc/housing-market-simulation'
-  branch: source
+  branch: master
 
 launch_buttons:
   binderhub_url: "https://mybinder.org"

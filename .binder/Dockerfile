@@ -5,7 +5,7 @@ FROM ghcr.io/rocker-org/binder:latest
 COPY --chown=jovyan . /home/jovyan
 
 # install uv
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+RUN curl -LsSf https://astral.sh/uv/0.11.1/install.sh | sh
 
 # make sure uv’s install dir is on PATH
 ENV PATH="/home/jovyan/.local/bin:${PATH}"

@@ -2,20 +2,9 @@ import pandera as pa
 from pandera.typing import Series
 
 
-class EventFact(pa.DataFrameModel):
-    """One row per simulation event."""
-
-    time: Series[float] = pa.Field(ge=0)
-    event_type: Series[str]
-    agent_id: Series[str] = pa.Field(nullable=True)
-    house_id: Series[str] = pa.Field(nullable=True)
-    amount: Series[float] = pa.Field(nullable=True)
-
-    class Config:
-        coerce = True
-
-
 class WealthLog(pa.DataFrameModel):
+    """Silver: cumulative agent wealth at each event time."""
+
     time: Series[float] = pa.Field(ge=0)
     agent: Series[str]
     money: Series[float]
@@ -25,6 +14,8 @@ class WealthLog(pa.DataFrameModel):
 
 
 class OccupancyLog(pa.DataFrameModel):
+    """Silver: house occupancy state at each event time."""
+
     time: Series[float] = pa.Field(ge=0)
     house: Series[str]
     occupant: Series[str]
@@ -34,6 +25,8 @@ class OccupancyLog(pa.DataFrameModel):
 
 
 class RentLog(pa.DataFrameModel):
+    """Silver: individual rent payments."""
+
     time: Series[float] = pa.Field(ge=0)
     house: Series[str]
     tenant: Series[str]
@@ -43,15 +36,9 @@ class RentLog(pa.DataFrameModel):
         coerce = True
 
 
-class VacancyCount(pa.DataFrameModel):
-    time: Series[float] = pa.Field(ge=0)
-    n_vacant: Series[int] = pa.Field(ge=0)
-
-    class Config:
-        coerce = True
-
-
 class TimeToRent(pa.DataFrameModel):
+    """Silver: duration from vacancy to next rental for each house."""
+
     time: Series[float] = pa.Field(ge=0)
     house: Series[str]
     duration: Series[float] = pa.Field(ge=0)
@@ -61,6 +48,8 @@ class TimeToRent(pa.DataFrameModel):
 
 
 class HouseRentLog(pa.DataFrameModel):
+    """Silver: reconstructed asking rent per house at each event time."""
+
     time: Series[float] = pa.Field(ge=0)
     house: Series[str]
     rent: Series[float] = pa.Field(ge=0)

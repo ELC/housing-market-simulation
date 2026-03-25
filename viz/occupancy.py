@@ -4,16 +4,17 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from pandera.typing import DataFrame
 
-from core.analytics.schemas import OccupancyLog
+from analytics.gold.schemas import OccupancyTimeline
 
 
 def plot_occupancy(
-    occupancy_df: DataFrame[OccupancyLog],
+    data: DataFrame[OccupancyTimeline],
     figsize: tuple[float, float] = (14, 5),
 ) -> tuple[Figure, Axes]:
     renter_names: list[str] = sorted(
-        occupancy_df.loc[
-            occupancy_df[OccupancyLog.occupant] != "vacant", OccupancyLog.occupant
+        data.loc[
+            data[OccupancyTimeline.occupant] != "vacant",
+            OccupancyTimeline.occupant,
         ].unique()
     )
     palette: dict[str, str] = {"vacant": "#dddddd"}
@@ -21,10 +22,10 @@ def plot_occupancy(
 
     fig, ax = plt.subplots(figsize=figsize)
     sns.scatterplot(
-        data=occupancy_df,
-        x=OccupancyLog.time,
-        y=OccupancyLog.house,
-        hue=OccupancyLog.occupant,
+        data=data,
+        x=OccupancyTimeline.time,
+        y=OccupancyTimeline.house,
+        hue=OccupancyTimeline.occupant,
         palette=palette,
         s=160,
         marker="s",

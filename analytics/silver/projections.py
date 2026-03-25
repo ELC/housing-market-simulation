@@ -3,13 +3,12 @@ import math
 import pandas as pd
 from pandera.typing import DataFrame
 
-from core.analytics.schemas import (
-    EventFact,
+from analytics.bronze.schemas import EventFact
+from analytics.silver.schemas import (
     HouseRentLog,
     OccupancyLog,
     RentLog,
     TimeToRent,
-    VacancyCount,
     WealthLog,
 )
 from core.market import HousingMarket
@@ -123,6 +122,7 @@ def project_occupancy(
 def project_rent_payments(
     facts: DataFrame[EventFact],
 ) -> DataFrame[RentLog]:
+    """Extract individual rent payment records from the fact table."""
     return (
         facts.query(f"{EventFact.event_type} == 'rent_collected'")
         [[EventFact.time, EventFact.house_id, EventFact.agent_id, EventFact.amount]]
@@ -134,21 +134,6 @@ def project_rent_payments(
         )
         .reset_index(drop=True)
         .pipe(RentLog.validate)
-    )
-
-
-def project_vacancy_count(
-    occupancy: DataFrame[OccupancyLog],
-) -> DataFrame[VacancyCount]:
-    return (
-        occupancy.assign(
-            is_vacant=lambda df: (df[OccupancyLog.occupant] == "vacant").astype(int)
-        )
-        .groupby(OccupancyLog.time)["is_vacant"]
-        .sum()
-        .rename(VacancyCount.n_vacant)
-        .reset_index()
-        .pipe(VacancyCount.validate)
     )
 
 
@@ -202,10 +187,9 @@ def project_time_to_rent(
 
 def project_asking_rent(
     facts: DataFrame[EventFact],
-    occupancy: DataFrame[OccupancyLog],
     initial_market: HousingMarket,
 ) -> DataFrame[HouseRentLog]:
-    """Reconstruct each house's listed rent price over time.
+    """Reconstruct each house's listed rent price over time from bronze data only.
 
     At each auction_clear: vacant houses that remain vacant decay by
     exp(-vacancy_decay_rate); houses that get rented adopt the clearing
@@ -215,34 +199,56 @@ def project_asking_rent(
     house_ids: list[str] = [h.id for h in initial_market.houses]
     rent: dict[str, float] = {h.id: h.rent_price for h in initial_market.houses}
 
-    event_times: list[float] = sorted(occupancy[OccupancyLog.time].unique())
+    starts = (
+        facts.query(f"{EventFact.event_type} == 'rent_started'")
+        [[EventFact.time, EventFact.house_id, EventFact.agent_id]]
+    )
+    evicts = (
+        facts.query(f"{EventFact.event_type} == 'evicted'")
+        [[EventFact.time, EventFact.house_id]]
+    )
+
+    occ_events: pd.DataFrame = pd.concat(
+        [
+            pd.DataFrame(
+                {
+                    EventFact.time: [0.0] * len(house_ids),
+                    EventFact.house_id: house_ids,
+                    "occupant": ["vacant"] * len(house_ids),
+                }
+            ),
+            starts.rename(columns={EventFact.agent_id: "occupant"}),
+            evicts.assign(occupant="vacant"),
+        ],
+        ignore_index=True,
+    ).sort_values(EventFact.time)
+
+    event_times: list[float] = sorted(facts[EventFact.time].unique())
+
+    occ_wide: pd.DataFrame = (
+        occ_events.groupby([EventFact.house_id, EventFact.time])["occupant"]
+        .last()
+        .unstack(EventFact.house_id)
+        .reindex(event_times)
+        .ffill()
+    )
+
     auction_set: set[float] = set(
         facts.query(f"{EventFact.event_type} == 'auction_clear'")[EventFact.time]
     )
-    evictions: dict[float, set[str]] = (
-        facts.query(f"{EventFact.event_type} == 'evicted'")
-        .groupby(EventFact.time)[EventFact.house_id]
-        .apply(set)
-        .to_dict()
+    eviction_dict: dict[float, set[str]] = (
+        evicts.groupby(EventFact.time)[EventFact.house_id].apply(set).to_dict()
     )
 
-    started = facts.query(f"{EventFact.event_type} == 'rent_started'")[
-        [EventFact.time, EventFact.house_id]
-    ]
-    collected = facts.query(f"{EventFact.event_type} == 'rent_collected'")
-    clearing = started.merge(collected, on=[EventFact.time, EventFact.house_id])
+    clearing = starts[[EventFact.time, EventFact.house_id]].merge(
+        facts.query(f"{EventFact.event_type} == 'rent_collected'"),
+        on=[EventFact.time, EventFact.house_id],
+    )
     clearing_prices: dict[tuple[float, str], float] = dict(
         zip(
             zip(clearing[EventFact.time], clearing[EventFact.house_id]),
             clearing[EventFact.amount],
         )
-    )
-
-    occ_wide: pd.DataFrame = occupancy.pivot_table(
-        index=OccupancyLog.time,
-        columns=OccupancyLog.house,
-        values=OccupancyLog.occupant,
-        aggfunc="last",
     )
 
     rows: list[dict[str, float | str]] = []
@@ -254,7 +260,7 @@ def project_asking_rent(
         }
 
         if t in auction_set:
-            was_vacant = prev_vacant | evictions.get(t, set())
+            was_vacant = prev_vacant | eviction_dict.get(t, set())
             for hid in was_vacant & curr_vacant:
                 rent[hid] *= decay
             for hid in was_vacant - curr_vacant:

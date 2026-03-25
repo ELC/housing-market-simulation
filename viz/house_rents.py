@@ -4,27 +4,27 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from pandera.typing import DataFrame
 
-from core.analytics.schemas import HouseRentLog
+from analytics.gold.schemas import HouseRents
 
 
 def plot_house_rents(
-    asking_rent_df: DataFrame[HouseRentLog],
+    data: DataFrame[HouseRents],
     figsize: tuple[float, float] = (14, 4),
 ) -> tuple[Figure, Axes]:
     fig, ax = plt.subplots(figsize=figsize)
     sns.lineplot(
-        data=asking_rent_df,
-        x=HouseRentLog.time,
-        y=HouseRentLog.rent,
-        hue=HouseRentLog.house,
+        data=data,
+        x=HouseRents.time,
+        y=HouseRents.rent,
+        hue=HouseRents.house,
         ax=ax,
         alpha=0.5,
         linewidth=1,
     )
     sns.lineplot(
-        data=asking_rent_df,
-        x=HouseRentLog.time,
-        y=HouseRentLog.rent,
+        data=data,
+        x=HouseRents.time,
+        y=HouseRents.rent,
         ax=ax,
         color="black",
         linewidth=2,

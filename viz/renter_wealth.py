@@ -4,21 +4,19 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from pandera.typing import DataFrame
 
-from core.analytics.schemas import WealthLog
+from analytics.gold.schemas import RenterWealth
 
 
 def plot_renter_wealth(
-    wealth_df: DataFrame[WealthLog],
+    data: DataFrame[RenterWealth],
     figsize: tuple[float, float] = (14, 5),
 ) -> tuple[Figure, Axes]:
-    renter_wealth = wealth_df.query(f"{WealthLog.agent} != 'landlord'")
-
     fig, ax = plt.subplots(figsize=figsize)
     sns.lineplot(
-        data=renter_wealth,
-        x=WealthLog.time,
-        y=WealthLog.money,
-        hue=WealthLog.agent,
+        data=data,
+        x=RenterWealth.time,
+        y=RenterWealth.money,
+        hue=RenterWealth.agent,
         ax=ax,
     )
     ax.set_title("Renter Wealth Over Time")

@@ -3,8 +3,8 @@ from typing import TypedDict
 import pandas as pd
 from pandera.typing import DataFrame
 
+from analytics.bronze.schemas import EventFact
 from core.agent import Agent
-from core.analytics.schemas import EventFact
 from core.events import (
     AgentIncomeReceived,
     AuctionClear,
@@ -84,7 +84,7 @@ def build_fact_table(
     event_log: list[Event],
     initial_market: HousingMarket,
 ) -> DataFrame[EventFact]:
-    """ETL: event objects -> validated fact table."""
+    """ETL: raw event objects -> validated bronze fact table."""
     agents: dict[str, Agent] = {a.id: a for a in initial_market.agents}
     rows: list[EventRow] = [
         r for e in event_log if (r := event_to_row(e, agents)) is not None

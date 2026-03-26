@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, FrozenSet
+from typing import TYPE_CHECKING
 
 from core.base import FrozenModel
 from core.house.state import (
@@ -30,7 +30,7 @@ class House(FrozenModel):
                 return None
 
     @property
-    def DEPENDS_ON(self) -> FrozenSet[Signal]:
+    def DEPENDS_ON(self) -> frozenset[Signal]:
         return self.state.DEPENDS_ON
 
     def decide(self, market: "HousingMarket", now: float) -> list["EventType"]:

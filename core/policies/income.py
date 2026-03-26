@@ -1,6 +1,7 @@
-from typing import TYPE_CHECKING, ClassVar, FrozenSet
+from typing import TYPE_CHECKING, ClassVar
 
-from core.base import FrozenModel
+from core.events.base import Event
+from core.policies.protocol import AgentPolicy
 from core.signals import Signal
 
 if TYPE_CHECKING:
@@ -8,8 +9,10 @@ if TYPE_CHECKING:
     from core.market import HousingMarket
 
 
-class IncomePolicy(FrozenModel):
-    DEPENDS_ON: ClassVar[FrozenSet[Signal]] = frozenset()
+class IncomePolicy(AgentPolicy):
+    DEPENDS_ON: ClassVar[frozenset[Signal]] = frozenset()
 
-    def decide(self, agent: "Agent", market: "HousingMarket", now: float) -> list:
+    def decide(
+        self, agent: "Agent", market: "HousingMarket", now: float
+    ) -> list[Event]:
         return []

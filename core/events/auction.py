@@ -19,18 +19,23 @@ class AuctionClear(Event):
     def apply(self, market: "HousingMarket") -> ApplyResult:
         bids_by_house = self._group_bids(market)
         updated_houses: dict[str, House] = {}
-        events: list = []
+        events: list[Event] = []
         matched: set[str] = {occ for h in market.houses if (occ := h.occupant_id())}
 
         for house in market.houses:
             match house.state:
                 case VacantState():
-                    result = self._handle_vacant(house, bids_by_house, market, matched)
-                    updated_houses[house.id] = result.house
-                    events.extend(result.events)
+                    vacant_house, vacant_events = self._handle_vacant(
+                        house, bids_by_house, market, matched
+                    )
+                    updated_houses[house.id] = vacant_house
+                    events.extend(vacant_events)
 
                 case ConstructionState():
                     updated_houses[house.id] = self._handle_construction(house)
+
+                case _:
+                    pass
 
         new_market = market.update_entities(updated_houses).model_copy(
             update={"pending_bids": ()}
@@ -50,7 +55,7 @@ class AuctionClear(Event):
         bids_by_house: dict[str, list[Bid]],
         market: "HousingMarket",
         matched: set[str],
-    ) -> "_AuctionResult":
+    ) -> tuple[House, list[Event]]:
         bids = bids_by_house.get(house.id, [])
         valid = [
             b for b in bids if b.price >= house.rent_price and b.agent_id not in matched
@@ -60,12 +65,14 @@ class AuctionClear(Event):
             decay = math.exp(-market.settings.vacancy_decay_rate)
             new_price = house.rent_price * decay
             updated = house.model_copy(update={"rent_price": new_price})
-            return _AuctionResult(updated, [])
+            return updated, []
 
         sorted_bids = sorted(valid, key=lambda b: b.price, reverse=True)
         winner = sorted_bids[0]
 
-        second_price = sorted_bids[1].price if len(sorted_bids) > 1 else house.rent_price
+        second_price = (
+            sorted_bids[1].price if len(sorted_bids) > 1 else house.rent_price
+        )
         clearing_price = max(second_price, house.rent_price)
         updated = house.model_copy(update={"rent_price": clearing_price})
 
@@ -74,7 +81,7 @@ class AuctionClear(Event):
             time=self.time, house_id=house.id, tenant_id=winner.agent_id
         )
 
-        return _AuctionResult(updated, [rent_event])
+        return updated, [rent_event]
 
     def _handle_construction(self, house: House) -> House:
         state = house.state
@@ -85,11 +92,3 @@ class AuctionClear(Event):
         return house.model_copy(
             update={"state": ConstructionState(remaining_time=state.remaining_time - 1)}
         )
-
-
-class _AuctionResult:
-    __slots__ = ("house", "events")
-
-    def __init__(self, house: House, events: list) -> None:
-        self.house = house
-        self.events = events

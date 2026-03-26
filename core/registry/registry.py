@@ -1,4 +1,5 @@
-from typing import FrozenSet, Mapping
+from collections.abc import Set as AbstractSet
+from typing import Mapping
 
 from pydantic import Field
 
@@ -6,10 +7,10 @@ from core.base import FrozenModel
 
 
 class SignalRegistry(FrozenModel):
-    dependencies: Mapping[str, FrozenSet[str]] = Field(default_factory=dict)
-    reverse_dependencies: Mapping[str, FrozenSet[str]] = Field(default_factory=dict)
+    dependencies: Mapping[str, frozenset[str]] = Field(default_factory=dict)
+    reverse_dependencies: Mapping[str, frozenset[str]] = Field(default_factory=dict)
 
-    def propagate(self, invalid: set[str]) -> set[str]:
+    def propagate(self, invalid: AbstractSet[str]) -> frozenset[str]:
         result = set(invalid)
         queue = list(invalid)
 
@@ -20,4 +21,4 @@ class SignalRegistry(FrozenModel):
                     result.add(dep)
                     queue.append(dep)
 
-        return result
+        return frozenset(result)

@@ -1,6 +1,8 @@
-from typing import TYPE_CHECKING, FrozenSet, Protocol, runtime_checkable
+from abc import abstractmethod
+from typing import TYPE_CHECKING, ClassVar
 
 from core.base import FrozenModel
+from core.events.base import Event
 from core.signals import Signal
 
 if TYPE_CHECKING:
@@ -8,31 +10,30 @@ if TYPE_CHECKING:
     from core.market import HousingMarket
 
 
-@runtime_checkable
-class AgentPolicy(Protocol):
-    DEPENDS_ON: FrozenSet[Signal]
+class AgentPolicy(FrozenModel):
+    DEPENDS_ON: ClassVar[frozenset[Signal]]
 
+    @abstractmethod
     def decide(
         self,
         agent: "Agent",
         market: "HousingMarket",
         now: float,
-    ) -> list: ...
+    ) -> list[Event]: ...
 
 
-class CompositeAgentPolicy(FrozenModel):
+class CompositeAgentPolicy(AgentPolicy):
     policies: tuple[AgentPolicy, ...]
 
     @property
-    def DEPENDS_ON(self) -> FrozenSet[Signal]:
+    def DEPENDS_ON(self) -> frozenset[Signal]:
         deps: set[Signal] = set()
         for p in self.policies:
             deps |= p.DEPENDS_ON
         return frozenset(deps)
 
-    def decide(self, agent: "Agent", market: "HousingMarket", now: float) -> list:
-        events: list = []
+    def decide(self, agent: "Agent", market: "HousingMarket", now: float) -> list[Event]:
+        events: list[Event] = []
         for p in self.policies:
-            result = p.decide(agent, market, now)
-            events.extend(result)
+            events.extend(p.decide(agent, market, now))
         return events

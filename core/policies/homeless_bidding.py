@@ -1,8 +1,9 @@
-from typing import TYPE_CHECKING, ClassVar, FrozenSet
+from typing import TYPE_CHECKING, ClassVar
 
-from core.base import FrozenModel
 from core.events import Bid
+from core.events.base import Event
 from core.house import VacantState
+from core.policies.protocol import AgentPolicy
 from core.signals import Signal
 
 if TYPE_CHECKING:
@@ -10,16 +11,18 @@ if TYPE_CHECKING:
     from core.market import HousingMarket
 
 
-class HomelessBiddingPolicy(FrozenModel):
-    DEPENDS_ON: ClassVar[FrozenSet[Signal]] = frozenset(
+class HomelessBiddingPolicy(AgentPolicy):
+    DEPENDS_ON: ClassVar[frozenset[Signal]] = frozenset(
         {Signal.HOMELESSNESS, Signal.MARKET_RENT}
     )
 
-    def decide(self, agent: "Agent", market: "HousingMarket", now: float) -> list:
+    def decide(
+        self, agent: "Agent", market: "HousingMarket", now: float
+    ) -> list[Event]:
         if not agent.is_homeless(market):
             return []
 
-        events: list = []
+        events: list[Event] = []
 
         for house in market.houses:
             if not isinstance(house.state, VacantState):
@@ -27,13 +30,15 @@ class HomelessBiddingPolicy(FrozenModel):
 
             price = agent.willingness_to_pay(house)
 
-            if price >= house.rent_price:
-                bid = Bid(
-                    time=now,
-                    agent_id=agent.id,
-                    house_id=house.id,
-                    price=price,
-                )
-                events.append(bid)
+            if price < house.rent_price:
+                continue
+
+            bid = Bid(
+                time=now,
+                agent_id=agent.id,
+                house_id=house.id,
+                price=price,
+            )
+            events.append(bid)
 
         return events

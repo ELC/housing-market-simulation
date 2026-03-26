@@ -5,8 +5,7 @@ from typing import TYPE_CHECKING
 from core.events.base import ApplyResult, Event
 from core.events.bid import Bid
 from core.events.rent import RentStarted
-from core.house.house import House
-from core.house.state import ConstructionState, VacantState
+from core.house import ConstructionState, House, VacantState
 from core.signals import Signal
 
 if TYPE_CHECKING:

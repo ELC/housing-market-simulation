@@ -3,8 +3,8 @@ from typing import Self, Sequence
 from core.agent import Agent
 from core.base import FrozenModel
 from core.entity import Entity
-from core.events.bid import Bid
-from core.house.house import House
+from core.events import Bid
+from core.house import House
 from core.settings import SimulationSettings
 
 

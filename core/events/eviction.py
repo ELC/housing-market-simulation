@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 from core.events.base import ApplyResult, Event
-from core.house.state import VacantState
+from core.house import VacantState
 from core.signals import Signal
 
 if TYPE_CHECKING:

@@ -1,11 +1,11 @@
 from typing import TYPE_CHECKING, FrozenSet
 
 from core.base import FrozenModel
-from core.policies.protocol import AgentPolicy
+from core.house import House
+from core.policies import AgentPolicy
 from core.signals import Signal
 
 if TYPE_CHECKING:
-    from core.house.house import House
     from core.market import HousingMarket
 
 

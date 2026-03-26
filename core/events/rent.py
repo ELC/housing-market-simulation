@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from core.events.base import ApplyResult, Event
 from core.events.eviction import Evicted
-from core.house.state import RentedState
+from core.house import RentedState
 from core.signals import Signal
 
 if TYPE_CHECKING:

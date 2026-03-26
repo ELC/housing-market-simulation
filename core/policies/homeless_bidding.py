@@ -1,8 +1,8 @@
 from typing import TYPE_CHECKING, ClassVar, FrozenSet
 
 from core.base import FrozenModel
-from core.events.bid import Bid
-from core.house.state import VacantState
+from core.events import Bid
+from core.house import VacantState
 from core.signals import Signal
 
 if TYPE_CHECKING:

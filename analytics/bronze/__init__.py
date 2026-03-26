@@ -1,5 +1,9 @@
-from analytics.bronze.fact_table import EventRow, build_fact_table, event_to_row
-from analytics.bronze.schemas import EventFact
+from analytics.bronze.event_facts import (
+    EventFact,
+    EventRow,
+    build_fact_table,
+    event_to_row,
+)
 
 __all__ = [
     "EventFact",

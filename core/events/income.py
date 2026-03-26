@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 
+from core.events.auction import AuctionClear
 from core.events.base import ApplyResult, Event
 
 if TYPE_CHECKING:
@@ -10,8 +11,6 @@ class AgentIncomeReceived(Event):
     agent_id: str
 
     def apply(self, market: "HousingMarket") -> ApplyResult:
-        from core.events.auction import AuctionClear
-
         agent = market.agent_map[self.agent_id]
         updated = agent.model_copy(
             update={"money": agent.money + agent.income * (1 - agent.spend_rate)}

@@ -1,17 +1,8 @@
-from analytics.silver.projections import (
-    project_asking_rent,
-    project_occupancy,
-    project_rent_payments,
-    project_time_to_rent,
-    project_wealth,
-)
-from analytics.silver.schemas import (
-    HouseRentLog,
-    OccupancyLog,
-    RentLog,
-    TimeToRent,
-    WealthLog,
-)
+from analytics.silver.asking_rent import HouseRentLog, project_asking_rent
+from analytics.silver.occupancy import OccupancyLog, project_occupancy
+from analytics.silver.rent_payments import RentLog, project_rent_payments
+from analytics.silver.time_to_rent import TimeToRent, project_time_to_rent
+from analytics.silver.wealth import WealthLog, project_wealth
 
 __all__ = [
     "HouseRentLog",

@@ -3,7 +3,7 @@ from typing import TypedDict
 import pandas as pd
 from pandera.typing import DataFrame
 
-from analytics.bronze.schemas import EventFact
+from analytics.bronze.event_facts.schema import EventFact
 from core.agent import Agent
 from core.events import (
     AgentIncomeReceived,
@@ -25,8 +25,7 @@ class EventRow(TypedDict):
     amount: float | None
 
 
-def event_to_row(event: Event, agents: dict[str, Agent]) -> EventRow | None:
-    """Convert a single simulation event to a flat fact-table row."""
+def event_to_row(event: Event, agents: dict[str, Agent]) -> EventRow:
     match event:
         case AgentIncomeReceived(time=t, agent_id=aid):
             a = agents[aid]
@@ -77,14 +76,12 @@ def event_to_row(event: Event, agents: dict[str, Agent]) -> EventRow | None:
                 house_id=None,
                 amount=None,
             )
-    return None
 
 
 def build_fact_table(
     event_log: list[Event],
     initial_market: HousingMarket,
 ) -> DataFrame[EventFact]:
-    """ETL: raw event objects -> validated bronze fact table."""
     agents: dict[str, Agent] = {a.id: a for a in initial_market.agents}
     rows: list[EventRow] = [
         r for e in event_log if (r := event_to_row(e, agents)) is not None

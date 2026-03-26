@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 
 from core.events.base import ApplyResult, Event
+from core.events.eviction import Evicted
 from core.house.state import RentedState
 from core.signals import Signal
 
@@ -64,8 +65,6 @@ class RentDue(Event):
         return house.occupant_id() == self.tenant_id
 
     def apply(self, market: "HousingMarket") -> ApplyResult:
-        from core.events.eviction import Evicted
-
         tenant = market.agent_map[self.tenant_id]
 
         if tenant.money < self.amount:

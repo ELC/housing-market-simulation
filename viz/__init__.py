@@ -1,3 +1,4 @@
+from viz.base import chart
 from viz.avg_rent import plot_avg_rent
 from viz.house_rents import plot_house_rents
 from viz.housed_renter_wealth import plot_housed_renter_wealth
@@ -8,6 +9,7 @@ from viz.time_to_rent import plot_time_to_rent
 from viz.vacancy import plot_vacancy
 
 __all__ = [
+    "chart",
     "plot_avg_rent",
     "plot_house_rents",
     "plot_housed_renter_wealth",

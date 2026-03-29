@@ -8,8 +8,4 @@ def build_renter_wealth(
     wealth: DataFrame[WealthLog],
 ) -> DataFrame[RenterWealth]:
     """Filter wealth to renters only (exclude landlord)."""
-    return (
-        wealth.query(f"{WealthLog.agent} != 'landlord'")
-        .reset_index(drop=True)
-        .pipe(RenterWealth.validate)
-    )
+    return wealth.query(f"{WealthLog.agent} != 'landlord'").reset_index(drop=True).pipe(RenterWealth.validate)

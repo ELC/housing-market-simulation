@@ -3,7 +3,10 @@ from analytics.gold.housed_renter_wealth import (
     HousedRenterWealth,
     build_housed_renter_wealth,
 )
-from analytics.gold.occupancy_timeline import OccupancyTimeline, build_occupancy_timeline
+from analytics.gold.occupancy_timeline import (
+    OccupancyTimeline,
+    build_occupancy_timeline,
+)
 from analytics.gold.rent_comparison import RentComparison, build_rent_comparison
 from analytics.gold.rent_payments import RentPayments, build_rent_payments
 from analytics.gold.renter_wealth import RenterWealth, build_renter_wealth

@@ -1,11 +1,11 @@
 from analytics.bronze import EventFact, EventRow, build_fact_table, event_to_row
 from analytics.gold import (
-    HouseRents,
     HousedRenterWealth,
+    HouseRents,
     OccupancyTimeline,
     RentComparison,
-    RentPayments,
     RenterWealth,
+    RentPayments,
     TimeToRentRolling,
     VacancyCount,
     build_house_rents,

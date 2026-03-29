@@ -80,8 +80,6 @@ def build_fact_table(
     event_log: list[Event],
     initial_market: HousingMarket,
 ) -> DataFrame[EventFact]:
-    rows: list[EventRow] = [
-        r for e in event_log if (r := event_to_row(e)) is not None
-    ]
+    rows: list[EventRow] = [r for e in event_log if (r := event_to_row(e)) is not None]
     df = pd.DataFrame(rows)
     return EventFact.validate(df.reset_index(drop=True))

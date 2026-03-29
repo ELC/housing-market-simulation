@@ -87,7 +87,7 @@ From other non-related topic
 
 ### Links
 
-You know that there many search engines online? 
+You know that there many search engines online?
 
 There are [some](https://duckduckgo.com/) which focus on privacy, [others](https://www.startpage.com/) just work arround Google and [there is also one](https://www.searchencrypt.com/) that uses ecryption!
 
@@ -197,7 +197,7 @@ These are some features that are the moment are only compatible with Jupyter Boo
 Here is a Note
 ```
 
-```{important} 
+```{important}
 Here is an important
 ```
 

@@ -1,5 +1,6 @@
 from abc import ABC
-from typing import TYPE_CHECKING, Sequence, TypeAlias
+from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
 from core.base import FrozenModel
 from core.signals import Signal
@@ -21,4 +22,4 @@ class Event(FrozenModel, ABC):
         raise NotImplementedError
 
 
-ApplyResult: TypeAlias = tuple["HousingMarket", Sequence[Event]]
+type ApplyResult = tuple[HousingMarket, Sequence[Event]]

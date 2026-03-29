@@ -25,9 +25,7 @@ class AuctionClear(Event):
         for house in market.houses:
             match house.state:
                 case VacantState():
-                    vacant_house, vacant_events = self._handle_vacant(
-                        house, bids_by_house, market, matched
-                    )
+                    vacant_house, vacant_events = self._handle_vacant(house, bids_by_house, market, matched)
                     updated_houses[house.id] = vacant_house
                     events.extend(vacant_events)
 
@@ -37,9 +35,7 @@ class AuctionClear(Event):
                 case _:
                     pass
 
-        new_market = market.update_entities(updated_houses).model_copy(
-            update={"pending_bids": ()}
-        )
+        new_market = market.update_entities(updated_houses).model_copy(update={"pending_bids": ()})
 
         return new_market, events
 
@@ -57,9 +53,7 @@ class AuctionClear(Event):
         matched: set[str],
     ) -> tuple[House, list[Event]]:
         bids = bids_by_house.get(house.id, [])
-        valid = [
-            b for b in bids if b.price >= house.rent_price and b.agent_id not in matched
-        ]
+        valid = [b for b in bids if b.price >= house.rent_price and b.agent_id not in matched]
 
         if not valid:
             decay = math.exp(-market.settings.vacancy_decay_rate)
@@ -70,25 +64,17 @@ class AuctionClear(Event):
         sorted_bids = sorted(valid, key=lambda b: b.price, reverse=True)
         winner = sorted_bids[0]
 
-        second_price = (
-            sorted_bids[1].price if len(sorted_bids) > 1 else house.rent_price
-        )
+        second_price = sorted_bids[1].price if len(sorted_bids) > 1 else house.rent_price
         clearing_price = max(second_price, house.rent_price)
         updated = house.model_copy(update={"rent_price": clearing_price})
 
         matched.add(winner.agent_id)
-        rent_event = RentStarted(
-            time=self.time, house_id=house.id, tenant_id=winner.agent_id
-        )
+        rent_event = RentStarted(time=self.time, house_id=house.id, tenant_id=winner.agent_id)
 
         return updated, [rent_event]
 
     def _handle_construction(self, house: House) -> House:
         state = house.state
         if state.remaining_time <= 0:
-            return house.model_copy(
-                update={"state": VacantState(last_update_time=self.time)}
-            )
-        return house.model_copy(
-            update={"state": ConstructionState(remaining_time=state.remaining_time - 1)}
-        )
+            return house.model_copy(update={"state": VacantState(last_update_time=self.time)})
+        return house.model_copy(update={"state": ConstructionState(remaining_time=state.remaining_time - 1)})

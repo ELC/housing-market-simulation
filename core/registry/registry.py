@@ -1,5 +1,5 @@
+from collections.abc import Mapping
 from collections.abc import Set as AbstractSet
-from typing import Mapping
 
 from pydantic import Field
 

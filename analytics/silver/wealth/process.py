@@ -14,11 +14,9 @@ def project_wealth(
     house_owners: dict[str, str] = {h.id: h.owner_id for h in initial_market.houses}
     event_times: list[float] = sorted(facts[EventFact.time].unique())
 
-    inc: pd.DataFrame = (
-        facts.query(f"{EventFact.event_type} == 'income'")
-        [[EventFact.time, EventFact.agent_id, EventFact.amount]]
-        .rename(columns={EventFact.agent_id: WealthLog.agent, EventFact.amount: "delta"})
-    )
+    inc: pd.DataFrame = facts.query(f"{EventFact.event_type} == 'income'")[
+        [EventFact.time, EventFact.agent_id, EventFact.amount]
+    ].rename(columns={EventFact.agent_id: WealthLog.agent, EventFact.amount: "delta"})
 
     rent: pd.DataFrame = facts.query(f"{EventFact.event_type} == 'rent_collected'")
 
@@ -35,16 +33,15 @@ def project_wealth(
         .rename(columns={EventFact.amount: "delta"})
     )
 
-    initials: pd.DataFrame = pd.DataFrame(
-        {
-            EventFact.time: [0.0] * len(initial_market.agents),
-            WealthLog.agent: [a.id for a in initial_market.agents],
-            "delta": [a.money for a in initial_market.agents],
-        }
-    )
+    initials: pd.DataFrame = pd.DataFrame({
+        EventFact.time: [0.0] * len(initial_market.agents),
+        WealthLog.agent: [a.id for a in initial_market.agents],
+        "delta": [a.money for a in initial_market.agents],
+    })
 
     return (
-        pd.concat([initials, inc, debits, credits], ignore_index=True)
+        pd
+        .concat([initials, inc, debits, credits], ignore_index=True)
         .sort_values(EventFact.time, kind="mergesort")
         .assign(**{WealthLog.money: lambda df: df.groupby(WealthLog.agent)["delta"].cumsum()})
         .groupby([WealthLog.agent, EventFact.time])[WealthLog.money]

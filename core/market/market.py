@@ -1,5 +1,6 @@
+from collections.abc import Sequence
 from functools import cached_property
-from typing import Self, Sequence
+from typing import Self
 
 from core.agent import Agent
 from core.base import FrozenModel

@@ -17,8 +17,6 @@ class Evicted(Event):
 
     def apply(self, market: "HousingMarket") -> ApplyResult:
         house = market.house_map[self.house_id]
-        updated_house = house.model_copy(
-            update={"state": VacantState(last_update_time=self.time)}
-        )
+        updated_house = house.model_copy(update={"state": VacantState(last_update_time=self.time)})
         new_market = market.update_entities({house.id: updated_house})
         return new_market, []

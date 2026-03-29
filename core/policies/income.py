@@ -12,7 +12,5 @@ if TYPE_CHECKING:
 class IncomePolicy(AgentPolicy):
     DEPENDS_ON: ClassVar[frozenset[Signal]] = frozenset()
 
-    def decide(
-        self, agent: "Agent", market: "HousingMarket", now: float
-    ) -> list[Event]:
+    def decide(self, agent: "Agent", market: "HousingMarket", now: float) -> list[Event]:
         return []

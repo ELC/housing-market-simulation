@@ -18,9 +18,7 @@ class RentStarted(Event):
 
     def apply(self, market: "HousingMarket") -> ApplyResult:
         house = market.house_map[self.house_id]
-        updated_house = house.model_copy(
-            update={"state": RentedState(occupant_id=self.tenant_id)}
-        )
+        updated_house = house.model_copy(update={"state": RentedState(occupant_id=self.tenant_id)})
         due = RentDue(
             time=self.time,
             house_id=self.house_id,

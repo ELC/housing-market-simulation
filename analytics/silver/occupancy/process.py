@@ -13,36 +13,31 @@ def project_occupancy(
     """House occupancy from rent_started / evicted events, ffilled to every event time."""
     event_times: list[float] = sorted(facts[EventFact.time].unique())
 
-    starts: pd.DataFrame = (
-        facts.query(f"{EventFact.event_type} == 'rent_started'")
-        [[EventFact.time, EventFact.house_id, EventFact.agent_id]]
-        .rename(
-            columns={
-                EventFact.house_id: OccupancyLog.house,
-                EventFact.agent_id: OccupancyLog.occupant,
-            }
-        )
+    starts = facts.query(f"{EventFact.event_type} == 'rent_started'")[
+        [EventFact.time, EventFact.house_id, EventFact.agent_id]
+    ].rename(
+        columns={
+            EventFact.house_id: OccupancyLog.house,
+            EventFact.agent_id: OccupancyLog.occupant,
+        }
     )
 
-    evicts: pd.DataFrame = (
-        facts.query(f"{EventFact.event_type} == 'evicted'")
-        [[EventFact.time, EventFact.house_id]]
+    evicts = (
+        facts
+        .query(f"{EventFact.event_type} == 'evicted'")[[EventFact.time, EventFact.house_id]]
         .rename(columns={EventFact.house_id: OccupancyLog.house})
         .assign(**{OccupancyLog.occupant: "vacant"})
     )
 
-    initials: pd.DataFrame = pd.DataFrame(
-        {
-            EventFact.time: [0.0] * len(initial_market.houses),
-            OccupancyLog.house: [h.id for h in initial_market.houses],
-            OccupancyLog.occupant: [
-                h.occupant_id() or "vacant" for h in initial_market.houses
-            ],
-        }
-    )
+    initials = pd.DataFrame({
+        EventFact.time: [0.0] * len(initial_market.houses),
+        OccupancyLog.house: [h.id for h in initial_market.houses],
+        OccupancyLog.occupant: [h.occupant_id() or "vacant" for h in initial_market.houses],
+    })
 
     return (
-        pd.concat([initials, starts, evicts], ignore_index=True)
+        pd
+        .concat([initials, starts, evicts], ignore_index=True)
         .sort_values(EventFact.time)
         .groupby([OccupancyLog.house, EventFact.time])[OccupancyLog.occupant]
         .last()

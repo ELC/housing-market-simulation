@@ -9,9 +9,8 @@ def build_vacancy_count(
 ) -> DataFrame[VacancyCount]:
     """Count vacant houses at each event time."""
     return (
-        occupancy.assign(
-            is_vacant=lambda df: (df[OccupancyLog.occupant] == "vacant").astype(int)
-        )
+        occupancy
+        .assign(is_vacant=lambda df: (df[OccupancyLog.occupant] == "vacant").astype(int))
         .groupby(OccupancyLog.time)["is_vacant"]
         .sum()
         .rename(VacancyCount.n_vacant)

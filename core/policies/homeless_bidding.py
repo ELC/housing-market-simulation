@@ -12,13 +12,9 @@ if TYPE_CHECKING:
 
 
 class HomelessBiddingPolicy(AgentPolicy):
-    DEPENDS_ON: ClassVar[frozenset[Signal]] = frozenset(
-        {Signal.HOMELESSNESS, Signal.MARKET_RENT}
-    )
+    DEPENDS_ON: ClassVar[frozenset[Signal]] = frozenset({Signal.HOMELESSNESS, Signal.MARKET_RENT})
 
-    def decide(
-        self, agent: "Agent", market: "HousingMarket", now: float
-    ) -> list[Event]:
+    def decide(self, agent: "Agent", market: "HousingMarket", now: float) -> list[Event]:
         if not agent.is_homeless(market):
             return []
 

@@ -12,7 +12,8 @@ def build_time_to_rent_rolling(
     sorted_df = ttr.sort_values(TimeToRent.time)
     rolling = sorted_df[TimeToRent.duration].rolling(window, min_periods=1)
     return (
-        sorted_df.assign(
+        sorted_df
+        .assign(
             rolling_mean=rolling.mean(),
             rolling_std=rolling.std().fillna(0),
         )

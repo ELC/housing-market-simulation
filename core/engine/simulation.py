@@ -1,5 +1,5 @@
-from typing import Self
 from collections.abc import Sequence
+from typing import Self
 
 from pydantic import ConfigDict, Field
 

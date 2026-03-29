@@ -1,5 +1,5 @@
-from viz.base import chart
 from viz.avg_rent import plot_avg_rent
+from viz.base import chart
 from viz.house_rents import plot_house_rents
 from viz.housed_renter_wealth import plot_housed_renter_wealth
 from viz.occupancy import plot_occupancy

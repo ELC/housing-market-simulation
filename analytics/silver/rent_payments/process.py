@@ -9,8 +9,10 @@ def project_rent_payments(
 ) -> DataFrame[RentLog]:
     """Extract individual rent payment records from the fact table."""
     return (
-        facts.query(f"{EventFact.event_type} == 'rent_collected'")
-        [[EventFact.time, EventFact.house_id, EventFact.agent_id, EventFact.amount]]
+        facts
+        .query(f"{EventFact.event_type} == 'rent_collected'")[
+            [EventFact.time, EventFact.house_id, EventFact.agent_id, EventFact.amount]
+        ]
         .rename(
             columns={
                 EventFact.house_id: RentLog.house,

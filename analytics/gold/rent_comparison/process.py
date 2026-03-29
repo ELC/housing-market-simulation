@@ -11,8 +11,6 @@ def build_rent_comparison(
     asking: DataFrame[HouseRentLog],
 ) -> DataFrame[RentComparison]:
     """Combine paid and asked rent into a single long-form table."""
-    paid: pd.DataFrame = rent[[RentLog.time, RentLog.amount]].assign(kind="paid")
-    asked: pd.DataFrame = asking[[HouseRentLog.time]].assign(
-        amount=asking[HouseRentLog.rent].values, kind="asked"
-    )
+    paid = rent[[RentLog.time, RentLog.amount]].assign(kind="paid")
+    asked = asking[[HouseRentLog.time]].assign(amount=asking[HouseRentLog.rent].values, kind="asked")
     return pd.concat([paid, asked], ignore_index=True).pipe(RentComparison.validate)

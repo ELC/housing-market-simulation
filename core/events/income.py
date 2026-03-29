@@ -12,9 +12,7 @@ class AgentIncomeReceived(Event):
 
     def apply(self, market: "HousingMarket") -> ApplyResult:
         agent = market.agent_map[self.agent_id]
-        updated = agent.model_copy(
-            update={"money": agent.money + agent.income * (1 - agent.spend_rate)}
-        )
+        updated = agent.model_copy(update={"money": agent.money + agent.income * (1 - agent.spend_rate)})
         next_event = self.model_copy(update={"time": self.time + 1})
         auction = AuctionClear(time=self.time)
         new_market = market.update_entities({agent.id: updated})

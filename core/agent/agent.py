@@ -2,11 +2,11 @@ from typing import TYPE_CHECKING
 
 from core.base import FrozenModel
 from core.events.base import Event
-from core.house import House
 from core.policies import AgentPolicy
 from core.signals import Signal
 
 if TYPE_CHECKING:
+    from core.house import House
     from core.market import HousingMarket
 
 
@@ -30,8 +30,7 @@ class Agent(FrozenModel):
     def willingness_to_pay(self, house: "House") -> float:
         return max(
             0.0,
-            self.money
-            - (self.rent_weight * house.rent_price + self.age_weight * house.age),
+            self.money - (self.rent_weight * house.rent_price + self.age_weight * house.age),
         )
 
     def decide(self, market: "HousingMarket", now: float) -> list[Event]:

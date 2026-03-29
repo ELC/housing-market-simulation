@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING, TypeAlias
+from abc import ABC
+from typing import TYPE_CHECKING, Sequence, TypeAlias
 
 from core.base import FrozenModel
 from core.signals import Signal
@@ -6,10 +7,8 @@ from core.signals import Signal
 if TYPE_CHECKING:
     from core.market import HousingMarket
 
-ApplyResult: TypeAlias = tuple["HousingMarket", list["EventType"]]
 
-
-class Event(FrozenModel):
+class Event(FrozenModel, ABC):
     time: float
 
     def validate(self, market: "HousingMarket") -> bool:
@@ -20,3 +19,6 @@ class Event(FrozenModel):
 
     def apply(self, market: "HousingMarket") -> "ApplyResult":
         raise NotImplementedError
+
+
+ApplyResult: TypeAlias = tuple["HousingMarket", Sequence[Event]]

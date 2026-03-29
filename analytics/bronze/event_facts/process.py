@@ -4,7 +4,6 @@ import pandas as pd
 from pandera.typing import DataFrame
 
 from analytics.bronze.event_facts.schema import EventFact
-from core.agent import Agent
 from core.events import (
     AgentIncomeReceived,
     AuctionClear,
@@ -25,16 +24,15 @@ class EventRow(TypedDict):
     amount: float | None
 
 
-def event_to_row(event: Event, agents: dict[str, Agent]) -> EventRow:
+def event_to_row(event: Event) -> EventRow | None:
     match event:
-        case AgentIncomeReceived(time=t, agent_id=aid):
-            a = agents[aid]
+        case AgentIncomeReceived(time=t, agent_id=aid, amount=amt):
             return EventRow(
                 time=t,
                 event_type="income",
                 agent_id=aid,
                 house_id=None,
-                amount=a.income * (1 - a.spend_rate),
+                amount=amt,
             )
         case RentStarted(time=t, house_id=hid, tenant_id=tid):
             return EventRow(
@@ -82,9 +80,8 @@ def build_fact_table(
     event_log: list[Event],
     initial_market: HousingMarket,
 ) -> DataFrame[EventFact]:
-    agents: dict[str, Agent] = {a.id: a for a in initial_market.agents}
     rows: list[EventRow] = [
-        r for e in event_log if (r := event_to_row(e, agents)) is not None
+        r for e in event_log if (r := event_to_row(e)) is not None
     ]
     df = pd.DataFrame(rows)
     return EventFact.validate(df.reset_index(drop=True))

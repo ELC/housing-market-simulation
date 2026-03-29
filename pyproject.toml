@@ -16,3 +16,6 @@ dependencies = [
 dev = [
     "wheel>=0.46.3",
 ]
+lint = [
+    "pre-commit>=4.5.1",
+]

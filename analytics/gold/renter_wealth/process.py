@@ -6,6 +6,7 @@ from analytics.silver.wealth.schema import WealthLog
 
 def build_renter_wealth(
     wealth: DataFrame[WealthLog],
+    owner_names: frozenset[str] = frozenset(),
 ) -> DataFrame[RenterWealth]:
-    """Filter wealth to renters only (exclude landlord)."""
-    return wealth.query(f"{WealthLog.agent} != 'landlord'").reset_index(drop=True).pipe(RenterWealth.validate)
+    mask = ~wealth[WealthLog.agent].isin(list(owner_names))
+    return wealth[mask].reset_index(drop=True).pipe(RenterWealth.validate)

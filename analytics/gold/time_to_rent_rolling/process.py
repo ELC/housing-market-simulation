@@ -8,7 +8,6 @@ def build_time_to_rent_rolling(
     ttr: DataFrame[TimeToRent],
     window: int = 10,
 ) -> DataFrame[TimeToRentRolling]:
-    """Enrich time-to-rent with rolling mean and standard deviation."""
     sorted_df = ttr.sort_values(TimeToRent.time)
     rolling = sorted_df[TimeToRent.duration].rolling(window, min_periods=1)
     return (

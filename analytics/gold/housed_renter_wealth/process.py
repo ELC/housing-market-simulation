@@ -8,8 +8,8 @@ from analytics.silver.wealth.schema import WealthLog
 def build_housed_renter_wealth(
     wealth: DataFrame[WealthLog],
     occupancy: DataFrame[OccupancyLog],
+    owner_names: frozenset[str] = frozenset(),
 ) -> DataFrame[HousedRenterWealth]:
-    """Keep only wealth rows where the renter is housed (exclude homeless and landlord)."""
     housed_agents = (
         occupancy
         .query(f"{OccupancyLog.occupant} != 'vacant'")[[OccupancyLog.time, OccupancyLog.occupant]]
@@ -22,9 +22,9 @@ def build_housed_renter_wealth(
         .drop_duplicates()
     )
 
+    mask = ~wealth[WealthLog.agent].isin(list(owner_names))
     return (
-        wealth
-        .query(f"{WealthLog.agent} != 'landlord'")
+        wealth[mask]
         .merge(housed_agents, on=[WealthLog.time, WealthLog.agent])
         .reset_index(drop=True)
         .pipe(HousedRenterWealth.validate)

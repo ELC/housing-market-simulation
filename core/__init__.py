@@ -1,8 +1,16 @@
-from core.agent import Agent
+# ruff: noqa: I001 — core.entity must load before core.context to avoid circular imports
 from core.base import FrozenModel
+from core.entity import Agent, Entity, EntityIdentity, EntityType, House
+from core.entity.house import (
+    ConstructionState,
+    HouseState,
+    HouseStateType,
+    OwnerOccupiedState,
+    RentedState,
+    VacantState,
+)
 from core.context import SimulationContext
 from core.engine import EventQueue, QueueItem, SimulationEngine
-from core.entity import Entity
 from core.events import (
     AgentIncomeReceived,
     ApplyResult,
@@ -14,22 +22,13 @@ from core.events import (
     RentDue,
     RentStarted,
 )
-from core.house import (
-    ConstructionState,
-    House,
-    HouseState,
-    HouseStateType,
-    OwnerOccupiedState,
-    RentedState,
-    VacantState,
-)
-from core.market import HousingMarket
-from core.policies import (
+from core.entity.agent import (
     AgentPolicy,
     CompositeAgentPolicy,
     HomelessBiddingPolicy,
     IncomePolicy,
 )
+from core.market import HousingMarket
 from core.registry import SignalRegistry
 from core.settings import SimulationSettings
 from core.signals import Signal
@@ -44,6 +43,8 @@ __all__ = [
     "CompositeAgentPolicy",
     "ConstructionState",
     "Entity",
+    "EntityIdentity",
+    "EntityType",
     "EventQueue",
     "EventType",
     "Evicted",

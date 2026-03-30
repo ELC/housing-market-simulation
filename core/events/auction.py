@@ -2,9 +2,10 @@ import math
 from collections import defaultdict
 from typing import TYPE_CHECKING
 
+from core.entity.house import House
+from core.entity.house import ConstructionState, VacantState
 from core.events.base import ApplyResult, Event
 from core.events.rent import RentStarted
-from core.house import ConstructionState, House, VacantState
 from core.signals import Signal
 
 if TYPE_CHECKING:
@@ -19,11 +20,11 @@ class AuctionClear(Event):
 
     def apply(self, market: "HousingMarket", context: "SimulationContext") -> ApplyResult[RentStarted]:
         bids_by_house = self._group_bids(context)
-        updated_houses: dict[str, House] = {}
+        updated_houses: dict[str, "House"] = {}
         events = list[RentStarted]()
-        matched: set[str] = {occ for h in market.houses if (occ := h.occupant_id())}
+        matched: set[str] = {occ for h in market.entities_of_type(House) if (occ := h.occupant_id())}
 
-        for house in market.houses:
+        for house in market.entities_of_type(House):
             match house.state:
                 case VacantState():
                     vacant_house, vacant_events = self._handle_vacant(house, bids_by_house, market, matched)
@@ -49,11 +50,11 @@ class AuctionClear(Event):
 
     def _handle_vacant(
         self,
-        house: House,
+        house: "House",
         bids_by_house: dict[str, list["Bid"]],
         market: "HousingMarket",
         matched: set[str],
-    ) -> tuple[House, list[RentStarted]]:
+    ) -> tuple["House", list[RentStarted]]:
         bids = bids_by_house.get(house.id, [])
         valid = [b for b in bids if b.price >= house.rent_price and b.agent_id not in matched]
 
@@ -75,7 +76,7 @@ class AuctionClear(Event):
 
         return updated, [rent_event]
 
-    def _handle_construction(self, house: House) -> House:
+    def _handle_construction(self, house: "House") -> "House":
         assert isinstance(house.state, ConstructionState)
         if house.state.remaining_time <= 0:
             return house.model_copy(update={"state": VacantState(last_update_time=self.time)})

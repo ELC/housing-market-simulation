@@ -1,12 +1,14 @@
+from __future__ import annotations
+
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
 from core.base import FrozenModel
-from core.events import EventType
 from core.signals import Signal
 
 if TYPE_CHECKING:
-    from core.agent import Agent
+    from core.entity.agent.agent import Agent
+    from core.events import EventType
     from core.market import HousingMarket
 
 
@@ -35,7 +37,7 @@ class CompositeAgentPolicy(AgentPolicy):
         return frozenset(deps)
 
     def decide(self, agent: "Agent", market: "HousingMarket", now: float) -> list[EventType]:
-        events = list[EventType]()
+        events: list[EventType] = []
         for p in self.policies:
             events.extend(p.decide(agent, market, now))
         return events

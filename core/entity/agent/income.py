@@ -1,11 +1,11 @@
 from typing import TYPE_CHECKING
 
+from core.entity.agent.protocol import AgentPolicy
 from core.events import EventType
-from core.policies.protocol import AgentPolicy
 from core.signals import Signal
 
 if TYPE_CHECKING:
-    from core.agent import Agent
+    from core.entity.agent.agent import Agent
     from core.market import HousingMarket
 
 

@@ -5,6 +5,7 @@ from pandera.typing import DataFrame
 
 from analytics.bronze.event_facts.schema import EventFact
 from analytics.silver.asking_rent.schema import HouseRentLog
+from core.entity.house import House
 from core.market import HousingMarket
 
 
@@ -12,15 +13,11 @@ def project_asking_rent(
     facts: DataFrame[EventFact],
     initial_market: HousingMarket,
 ) -> DataFrame[HouseRentLog]:
-    """Reconstruct each house's listed rent price over time from bronze data only.
-
-    At each auction_clear: vacant houses that remain vacant decay by
-    exp(-vacancy_decay_rate); houses that get rented adopt the clearing
-    price (captured from the first rent_collected at the same time).
-    """
     decay: float = math.exp(-initial_market.settings.vacancy_decay_rate)
-    house_ids: list[str] = [h.id for h in initial_market.houses]
-    rent: dict[str, float] = {h.id: h.rent_price for h in initial_market.houses}
+    houses = initial_market.entities_of_type(House)
+    house_ids: list[str] = [h.id for h in houses]
+    house_names: dict[str, str] = {h.id: h.name for h in houses}
+    rent: dict[str, float] = {h.id: h.rent_price for h in houses}
 
     starts = facts.query(f"{EventFact.event_type} == 'rent_started'")[
         [EventFact.time, EventFact.house_id, EventFact.agent_id]
@@ -66,7 +63,7 @@ def project_asking_rent(
         )
     )
 
-    rows: list[dict[str, float | str]] = []
+    rows = list[dict[str, float | str]]()
     prev_vacant: set[str] = set(house_ids)
 
     for t in event_times:
@@ -83,7 +80,7 @@ def project_asking_rent(
         rows.extend(
             {
                 HouseRentLog.time: t,
-                HouseRentLog.house: hid,
+                HouseRentLog.house: house_names[hid],
                 HouseRentLog.rent: rent[hid],
             }
             for hid in house_ids

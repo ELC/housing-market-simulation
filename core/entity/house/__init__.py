@@ -1,5 +1,5 @@
-from core.house.house import House
-from core.house.state import (
+from core.entity.house.house import House
+from core.entity.house.state import (
     ConstructionState,
     HouseState,
     HouseStateType,

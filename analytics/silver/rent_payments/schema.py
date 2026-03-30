@@ -3,8 +3,6 @@ from pandera.typing import Series
 
 
 class RentLog(pa.DataFrameModel):
-    """Silver: individual rent payments."""
-
     time: Series[float] = pa.Field(ge=0)
     house: Series[str]
     tenant: Series[str]

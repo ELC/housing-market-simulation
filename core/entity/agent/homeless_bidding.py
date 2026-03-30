@@ -1,12 +1,12 @@
 from typing import TYPE_CHECKING
 
+from core.entity.agent.protocol import AgentPolicy
+from core.entity.house import House, VacantState
 from core.events import Bid, EventType
-from core.house import VacantState
-from core.policies.protocol import AgentPolicy
 from core.signals import Signal
 
 if TYPE_CHECKING:
-    from core.agent import Agent
+    from core.entity.agent.agent import Agent
     from core.market import HousingMarket
 
 
@@ -19,9 +19,9 @@ class HomelessBiddingPolicy(AgentPolicy):
         if not agent.is_homeless(market):
             return []
 
-        events: list[EventType] = []
+        events = list[EventType]()
 
-        for house in market.houses:
+        for house in market.entities_of_type(House):
             if not isinstance(house.state, VacantState):
                 continue
 

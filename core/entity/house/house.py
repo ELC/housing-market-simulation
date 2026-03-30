@@ -1,11 +1,12 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
-from core.base import FrozenModel
-from core.house.state import (
+from core.entity.entity import Entity
+from core.entity.house.state import (
     HouseStateType,
     OwnerOccupiedState,
     RentedState,
 )
+from core.entity.identity import EntityIdentity
 from core.signals import Signal
 
 if TYPE_CHECKING:
@@ -13,8 +14,9 @@ if TYPE_CHECKING:
     from core.market import HousingMarket
 
 
-class House(FrozenModel):
-    id: str
+class House(Entity):
+    identity: ClassVar[EntityIdentity] = EntityIdentity(provider="street_address")
+
     owner_id: str
     state: HouseStateType
     rent_price: float

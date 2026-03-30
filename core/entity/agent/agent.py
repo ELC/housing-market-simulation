@@ -1,17 +1,19 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
-from core.base import FrozenModel
-from core.events import EventType
-from core.policies import AgentPolicy
+from core.entity.agent.protocol import AgentPolicy
+from core.entity.entity import Entity
+from core.entity.house import House
+from core.entity.identity import EntityIdentity
 from core.signals import Signal
 
 if TYPE_CHECKING:
-    from core.house import House
+    from core.events import EventType
     from core.market import HousingMarket
 
 
-class Agent(FrozenModel):
-    id: str
+class Agent(Entity):
+    identity: ClassVar[EntityIdentity] = EntityIdentity(provider="first_name")
+
     money: float
     income: float
     spend_rate: float
@@ -25,13 +27,13 @@ class Agent(FrozenModel):
         return self.policy.DEPENDS_ON
 
     def is_homeless(self, market: "HousingMarket") -> bool:
-        return all(h.occupant_id() != self.id for h in market.houses)
+        return all(h.occupant_id() != self.id for h in market.entities_of_type(House))
 
-    def willingness_to_pay(self, house: "House") -> float:
+    def willingness_to_pay(self, house: House) -> float:
         return max(
             0.0,
             self.money - (self.rent_weight * house.rent_price + self.age_weight * house.age),
         )
 
-    def decide(self, market: "HousingMarket", now: float) -> list[EventType]:
+    def decide(self, market: "HousingMarket", now: float) -> list["EventType"]:
         return self.policy.decide(self, market, now)

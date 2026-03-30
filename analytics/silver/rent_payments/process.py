@@ -7,7 +7,6 @@ from analytics.silver.rent_payments.schema import RentLog
 def project_rent_payments(
     facts: DataFrame[EventFact],
 ) -> DataFrame[RentLog]:
-    """Extract individual rent payment records from the fact table."""
     return (
         facts
         .query(f"{EventFact.event_type} == 'rent_collected'")[

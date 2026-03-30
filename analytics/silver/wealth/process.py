@@ -3,6 +3,8 @@ from pandera.typing import DataFrame
 
 from analytics.bronze.event_facts.schema import EventFact
 from analytics.silver.wealth.schema import WealthLog
+from core.entity.agent import Agent
+from core.entity.house import House
 from core.market import HousingMarket
 
 
@@ -10,8 +12,9 @@ def project_wealth(
     facts: DataFrame[EventFact],
     initial_market: HousingMarket,
 ) -> DataFrame[WealthLog]:
-    """Cumulative agent wealth via a signed-delta ledger, ffilled to every event time."""
-    house_owners: dict[str, str] = {h.id: h.owner_id for h in initial_market.houses}
+    agents = initial_market.entities_of_type(Agent)
+    agent_names: dict[str, str] = {a.id: a.name for a in agents}
+    house_owners: dict[str, str] = {h.id: h.owner_id for h in initial_market.entities_of_type(House)}
     event_times: list[float] = sorted(facts[EventFact.time].unique())
 
     inc = facts.query(f"{EventFact.event_type} == 'income'")[
@@ -33,10 +36,11 @@ def project_wealth(
         .rename(columns={EventFact.amount: "delta"})
     )
 
+    agents = initial_market.entities_of_type(Agent)
     initials = pd.DataFrame({
-        EventFact.time: [0.0] * len(initial_market.agents),
-        WealthLog.agent: [a.id for a in initial_market.agents],
-        "delta": [a.money for a in initial_market.agents],
+        EventFact.time: [0.0] * len(agents),
+        WealthLog.agent: [a.id for a in agents],
+        "delta": [a.money for a in agents],
     })
 
     stacked = (
@@ -58,5 +62,6 @@ def project_wealth(
         stacked
         .rename(WealthLog.money)
         .reset_index()
+        .assign(**{WealthLog.agent: lambda df: df[WealthLog.agent].map(agent_names)})
         .pipe(WealthLog.validate)
     )

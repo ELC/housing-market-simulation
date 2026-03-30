@@ -3,8 +3,6 @@ from pandera.typing import Series
 
 
 class TimeToRentRolling(pa.DataFrameModel):
-    """Gold: time-to-rent enriched with rolling statistics."""
-
     time: Series[float] = pa.Field(ge=0)
     house: Series[str]
     duration: Series[float] = pa.Field(ge=0)

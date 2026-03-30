@@ -13,7 +13,6 @@ DEFAULT_FIGSIZE: tuple[float, float] = (14, 4)
 def chart(
     figsize: tuple[float, float] = DEFAULT_FIGSIZE,
 ) -> Generator[tuple[Figure, Axes], None, None]:
-    """Create a styled figure and apply tight_layout on exit."""
     with plt.style.context(STYLE):
         fig, ax = plt.subplots(figsize=figsize)
         yield fig, ax

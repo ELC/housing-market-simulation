@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, Self
 
+from core.entity.agent import Agent
 from core.events.auction import AuctionClear
 from core.events.base import ApplyResult, Event
 
@@ -13,7 +14,7 @@ class AgentIncomeReceived(Event):
     amount: float
 
     def apply(self, market: "HousingMarket", context: "SimulationContext") -> ApplyResult[Self | AuctionClear]:
-        agent = market.agent_map[self.agent_id]
+        agent = market.get(self.agent_id, Agent)
         updated = agent.model_copy(update={"money": agent.money + self.amount})
         next_event = self.model_copy(update={"time": self.time + 1})
         auction = AuctionClear(time=self.time)

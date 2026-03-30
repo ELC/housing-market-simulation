@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from abc import ABC
+from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
@@ -23,5 +23,6 @@ class Event(FrozenModel, ABC):
     def invalidates(self) -> set[Signal]:
         return set()
 
+    @abstractmethod
     def apply(self, market: HousingMarket) -> ApplyResult[Event]:
         raise NotImplementedError

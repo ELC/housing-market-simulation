@@ -7,11 +7,12 @@ from typing import TYPE_CHECKING
 from core.base import FrozenModel
 
 if TYPE_CHECKING:
+    from core.context import SimulationContext
     from core.market import HousingMarket
     from core.signals import Signal
 
 
-type ApplyResult[T: Event] = tuple[HousingMarket, Sequence[T]]
+type ApplyResult[T: Event] = tuple[HousingMarket, SimulationContext, Sequence[T]]
 
 
 class Event(FrozenModel, ABC):
@@ -24,5 +25,6 @@ class Event(FrozenModel, ABC):
         return set()
 
     @abstractmethod
-    def apply(self, market: HousingMarket) -> ApplyResult[Event]:
-        raise NotImplementedError
+    def apply(
+        self, market: HousingMarket, context: SimulationContext
+    ) -> ApplyResult[Event]: ...

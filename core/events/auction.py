@@ -3,12 +3,13 @@ from collections import defaultdict
 from typing import TYPE_CHECKING
 
 from core.events.base import ApplyResult, Event
-from core.events.bid import Bid
 from core.events.rent import RentStarted
 from core.house import ConstructionState, House, VacantState
 from core.signals import Signal
 
 if TYPE_CHECKING:
+    from core.context import SimulationContext
+    from core.events.bid import Bid
     from core.market import HousingMarket
 
 
@@ -16,8 +17,8 @@ class AuctionClear(Event):
     def invalidates(self) -> set[Signal]:
         return {Signal.MARKET_RENT, Signal.HOMELESSNESS}
 
-    def apply(self, market: "HousingMarket") -> ApplyResult[RentStarted]:
-        bids_by_house = self._group_bids(market)
+    def apply(self, market: "HousingMarket", context: "SimulationContext") -> ApplyResult[RentStarted]:
+        bids_by_house = self._group_bids(context)
         updated_houses: dict[str, House] = {}
         events = list[RentStarted]()
         matched: set[str] = {occ for h in market.houses if (occ := h.occupant_id())}
@@ -35,20 +36,21 @@ class AuctionClear(Event):
                 case _:
                     pass
 
-        new_market = market.update_entities(updated_houses).model_copy(update={"pending_bids": ()})
+        new_market = market.update_entities(updated_houses)
+        new_context = context.model_copy(update={"pending_bids": ()})
 
-        return new_market, events
+        return new_market, new_context, events
 
-    def _group_bids(self, market: "HousingMarket") -> dict[str, list[Bid]]:
+    def _group_bids(self, context: "SimulationContext") -> dict[str, list["Bid"]]:
         grouped: dict[str, list[Bid]] = defaultdict(list)
-        for b in market.pending_bids:
+        for b in context.pending_bids:
             grouped[b.house_id].append(b)
         return grouped
 
     def _handle_vacant(
         self,
         house: House,
-        bids_by_house: dict[str, list[Bid]],
+        bids_by_house: dict[str, list["Bid"]],
         market: "HousingMarket",
         matched: set[str],
     ) -> tuple[House, list[RentStarted]]:

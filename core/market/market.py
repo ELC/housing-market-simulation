@@ -4,7 +4,6 @@ from typing import Self
 
 from core.agent import Agent
 from core.base import FrozenModel
-from core.events import Bid
 from core.house import House
 from core.settings import SimulationSettings
 
@@ -12,7 +11,6 @@ from core.settings import SimulationSettings
 class HousingMarket(FrozenModel):
     entities: Sequence[House | Agent]
     settings: SimulationSettings
-    pending_bids: Sequence[Bid] = ()
 
     @cached_property
     def agents(self) -> tuple[Agent, ...]:

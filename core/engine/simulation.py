@@ -4,6 +4,7 @@ from typing import Self
 from pydantic import ConfigDict, Field
 
 from core.base import FrozenModel
+from core.context import SimulationContext
 from core.engine.queue import EventQueue
 from core.events import EventType
 from core.market import HousingMarket
@@ -16,6 +17,7 @@ class SimulationEngine(FrozenModel):
     market: HousingMarket
     queue: EventQueue
     registry: SignalRegistry
+    context: SimulationContext = Field(default_factory=SimulationContext)
     now: float = 0.0
     event_log: MutableSequence[EventType] = Field(default_factory=list[EventType])
 
@@ -25,7 +27,7 @@ class SimulationEngine(FrozenModel):
         if not event.is_valid(self.market):
             return self.model_copy(update={"queue": queue, "now": event.time})
 
-        market, emitted = event.apply(self.market)
+        market, context, emitted = event.apply(self.market, self.context)
         invalid = self.registry.propagate(event.invalidates())
 
         new_events = list[EventType](emitted)
@@ -43,6 +45,7 @@ class SimulationEngine(FrozenModel):
             update={
                 "market": market,
                 "queue": queue,
+                "context": context,
                 "now": event.time,
             }
         )

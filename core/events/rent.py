@@ -8,6 +8,7 @@ from core.house import RentedState
 from core.signals import Signal
 
 if TYPE_CHECKING:
+    from core.context import SimulationContext
     from core.market import HousingMarket
 
 
@@ -18,7 +19,7 @@ class RentStarted(Event):
     def invalidates(self) -> set[Signal]:
         return {Signal.HOMELESSNESS}
 
-    def apply(self, market: HousingMarket) -> ApplyResult[RentDue]:
+    def apply(self, market: HousingMarket, context: SimulationContext) -> ApplyResult[RentDue]:
         house = market.house_map[self.house_id]
         updated_house = house.model_copy(update={"state": RentedState(occupant_id=self.tenant_id)})
         due = RentDue(
@@ -28,7 +29,7 @@ class RentStarted(Event):
             amount=house.rent_price,
         )
         new_market = market.update_entities({house.id: updated_house})
-        return new_market, [due]
+        return new_market, context, [due]
 
 
 class RentCollected(Event):
@@ -36,7 +37,7 @@ class RentCollected(Event):
     tenant_id: str
     amount: float
 
-    def apply(self, market: HousingMarket) -> ApplyResult[RentDue]:
+    def apply(self, market: HousingMarket, context: SimulationContext) -> ApplyResult[RentDue]:
         house = market.house_map[self.house_id]
         owner = market.agent_map[house.owner_id]
         tenant = market.agent_map[self.tenant_id]
@@ -52,7 +53,7 @@ class RentCollected(Event):
             tenant_id=self.tenant_id,
             amount=self.amount,
         )
-        return new_market, [next_due]
+        return new_market, context, [next_due]
 
 
 class RentDue(Event):
@@ -64,15 +65,15 @@ class RentDue(Event):
         house = market.house_map[self.house_id]
         return house.occupant_id() == self.tenant_id
 
-    def apply(self, market: HousingMarket) -> ApplyResult[RentCollected | Evicted]:
+    def apply(self, market: HousingMarket, context: SimulationContext) -> ApplyResult[RentCollected | Evicted]:
         tenant = market.agent_map[self.tenant_id]
 
         if tenant.money < self.amount:
-            return market, [
+            return market, context, [
                 Evicted(time=self.time, house_id=self.house_id, tenant_id=self.tenant_id),
             ]
 
-        return market, [
+        return market, context, [
             RentCollected(
                 time=self.time,
                 house_id=self.house_id,

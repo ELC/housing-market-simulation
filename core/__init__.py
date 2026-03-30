@@ -1,5 +1,6 @@
 from core.agent import Agent
 from core.base import FrozenModel
+from core.context import SimulationContext
 from core.engine import EventQueue, QueueItem, SimulationEngine
 from core.entity import Entity
 from core.events import (
@@ -61,6 +62,7 @@ __all__ = [
     "RentedState",
     "Signal",
     "SignalRegistry",
+    "SimulationContext",
     "SimulationEngine",
     "SimulationSettings",
     "VacantState",

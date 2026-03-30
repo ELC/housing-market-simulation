@@ -16,10 +16,10 @@ class AuctionClear(Event):
     def invalidates(self) -> set[Signal]:
         return {Signal.MARKET_RENT, Signal.HOMELESSNESS}
 
-    def apply(self, market: "HousingMarket") -> ApplyResult:
+    def apply(self, market: "HousingMarket") -> ApplyResult[RentStarted]:
         bids_by_house = self._group_bids(market)
         updated_houses: dict[str, House] = {}
-        events: list[Event] = []
+        events = list[RentStarted]()
         matched: set[str] = {occ for h in market.houses if (occ := h.occupant_id())}
 
         for house in market.houses:
@@ -51,7 +51,7 @@ class AuctionClear(Event):
         bids_by_house: dict[str, list[Bid]],
         market: "HousingMarket",
         matched: set[str],
-    ) -> tuple[House, list[Event]]:
+    ) -> tuple[House, list[RentStarted]]:
         bids = bids_by_house.get(house.id, [])
         valid = [b for b in bids if b.price >= house.rent_price and b.agent_id not in matched]
 

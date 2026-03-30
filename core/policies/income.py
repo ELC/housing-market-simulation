@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from core.events.base import Event
+from core.events import EventType
 from core.policies.protocol import AgentPolicy
 from core.signals import Signal
 
@@ -14,5 +14,5 @@ class IncomePolicy(AgentPolicy):
     def DEPENDS_ON(self) -> frozenset[Signal]:
         return frozenset()
 
-    def decide(self, agent: "Agent", market: "HousingMarket", now: float) -> list[Event]:
+    def decide(self, agent: "Agent", market: "HousingMarket", now: float) -> list[EventType]:
         return []

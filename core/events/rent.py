@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from core.events.base import ApplyResult, Event
@@ -16,7 +18,7 @@ class RentStarted(Event):
     def invalidates(self) -> set[Signal]:
         return {Signal.HOMELESSNESS}
 
-    def apply(self, market: "HousingMarket") -> ApplyResult:
+    def apply(self, market: HousingMarket) -> ApplyResult[RentDue]:
         house = market.house_map[self.house_id]
         updated_house = house.model_copy(update={"state": RentedState(occupant_id=self.tenant_id)})
         due = RentDue(
@@ -34,7 +36,7 @@ class RentCollected(Event):
     tenant_id: str
     amount: float
 
-    def apply(self, market: "HousingMarket") -> ApplyResult:
+    def apply(self, market: HousingMarket) -> ApplyResult[RentDue]:
         house = market.house_map[self.house_id]
         owner = market.agent_map[house.owner_id]
         tenant = market.agent_map[self.tenant_id]
@@ -58,11 +60,11 @@ class RentDue(Event):
     tenant_id: str
     amount: float
 
-    def is_valid(self, market: "HousingMarket") -> bool:
+    def is_valid(self, market: HousingMarket) -> bool:
         house = market.house_map[self.house_id]
         return house.occupant_id() == self.tenant_id
 
-    def apply(self, market: "HousingMarket") -> ApplyResult:
+    def apply(self, market: HousingMarket) -> ApplyResult[RentCollected | Evicted]:
         tenant = market.agent_map[self.tenant_id]
 
         if tenant.money < self.amount:

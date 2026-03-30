@@ -5,7 +5,7 @@ from pydantic import ConfigDict, Field
 
 from core.base import FrozenModel
 from core.engine.queue import EventQueue
-from core.events import Event
+from core.events import EventType
 from core.market import HousingMarket
 from core.registry import SignalRegistry
 
@@ -17,7 +17,7 @@ class SimulationEngine(FrozenModel):
     queue: EventQueue
     registry: SignalRegistry
     now: float = 0.0
-    event_log: MutableSequence[Event] = Field(default_factory=list[Event])
+    event_log: MutableSequence[EventType] = Field(default_factory=list[EventType])
 
     def step(self) -> Self:
         event, queue = self.queue.pop()
@@ -28,7 +28,7 @@ class SimulationEngine(FrozenModel):
         market, emitted = event.apply(self.market)
         invalid = self.registry.propagate(event.invalidates())
 
-        new_events = emitted
+        new_events = list[EventType](emitted)
 
         for entity in market.entities:
             if entity.DEPENDS_ON & invalid:

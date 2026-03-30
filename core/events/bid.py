@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Self
 
 from core.events.base import ApplyResult, Event
 
@@ -11,7 +11,7 @@ class Bid(Event):
     house_id: str
     price: float
 
-    def apply(self, market: "HousingMarket") -> ApplyResult:
+    def apply(self, market: "HousingMarket") -> ApplyResult[Self]:
         new_bids = (*market.pending_bids, self)
         new_market = market.model_copy(update={"pending_bids": new_bids})
         return new_market, []

@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from core.events.base import Event
+from core.events import EventType
 from core.signals import Signal
 
 if TYPE_CHECKING:
@@ -15,4 +15,4 @@ class Entity(Protocol):
     @property
     def DEPENDS_ON(self) -> frozenset[Signal]: ...
 
-    def decide(self, market: "HousingMarket", now: float) -> list[Event]: ...
+    def decide(self, market: "HousingMarket", now: float) -> list[EventType]: ...

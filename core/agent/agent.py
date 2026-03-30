@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 from core.base import FrozenModel
-from core.events.base import Event
+from core.events import EventType
 from core.policies import AgentPolicy
 from core.signals import Signal
 
@@ -33,5 +33,5 @@ class Agent(FrozenModel):
             self.money - (self.rent_weight * house.rent_price + self.age_weight * house.age),
         )
 
-    def decide(self, market: "HousingMarket", now: float) -> list[Event]:
+    def decide(self, market: "HousingMarket", now: float) -> list[EventType]:
         return self.policy.decide(self, market, now)

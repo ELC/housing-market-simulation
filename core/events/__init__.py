@@ -1,5 +1,5 @@
 from core.events.auction import AuctionClear
-from core.events.base import ApplyResult, Event
+from core.events.base import ApplyResult
 from core.events.bid import Bid
 from core.events.eviction import Evicted
 from core.events.income import AgentIncomeReceived
@@ -12,7 +12,6 @@ __all__ = [
     "ApplyResult",
     "AuctionClear",
     "Bid",
-    "Event",
     "EventType",
     "Evicted",
     "RentCollected",

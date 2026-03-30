@@ -2,7 +2,7 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING
 
 from core.base import FrozenModel
-from core.events.base import Event
+from core.events import EventType
 from core.signals import Signal
 
 if TYPE_CHECKING:
@@ -21,7 +21,7 @@ class AgentPolicy(FrozenModel):
         agent: "Agent",
         market: "HousingMarket",
         now: float,
-    ) -> list[Event]: ...
+    ) -> list[EventType]: ...
 
 
 class CompositeAgentPolicy(AgentPolicy):
@@ -34,8 +34,8 @@ class CompositeAgentPolicy(AgentPolicy):
             deps |= p.DEPENDS_ON
         return frozenset(deps)
 
-    def decide(self, agent: "Agent", market: "HousingMarket", now: float) -> list[Event]:
-        events: list[Event] = []
+    def decide(self, agent: "Agent", market: "HousingMarket", now: float) -> list[EventType]:
+        events = list[EventType]()
         for p in self.policies:
             events.extend(p.decide(agent, market, now))
         return events

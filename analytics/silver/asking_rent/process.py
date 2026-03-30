@@ -1,5 +1,4 @@
 import math
-from typing import TYPE_CHECKING
 
 import pandas as pd
 from pandera.typing import DataFrame
@@ -7,9 +6,6 @@ from pandera.typing import DataFrame
 from analytics.bronze.event_facts.schema import EventFact
 from analytics.silver.asking_rent.schema import HouseRentLog
 from core.market import HousingMarket
-
-if TYPE_CHECKING:
-    from collections.abc import Mapping
 
 
 def project_asking_rent(
@@ -56,7 +52,7 @@ def project_asking_rent(
     )
 
     auction_set: set[float] = set(facts.query(f"{EventFact.event_type} == 'auction_clear'")[EventFact.time])
-    eviction_dict: Mapping[float, set[str]] = evicts.groupby(EventFact.time)[EventFact.house_id].apply(set).to_dict()
+    eviction_dict = evicts.groupby(EventFact.time)[EventFact.house_id].apply(set).to_dict()
 
     clearing = starts[[EventFact.time, EventFact.house_id]].merge(
         facts.query(f"{EventFact.event_type} == 'rent_collected'"),

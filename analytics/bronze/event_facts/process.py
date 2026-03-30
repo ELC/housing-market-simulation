@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from typing import TypedDict
 
 import pandas as pd
@@ -8,7 +9,6 @@ from core.events import (
     AgentIncomeReceived,
     AuctionClear,
     Bid,
-    Event,
     EventType,
     Evicted,
     RentCollected,
@@ -81,9 +81,9 @@ def event_to_row(event: EventType) -> EventRow | None:
 
 
 def build_fact_table(
-    event_log: list[Event],
+    event_log: Sequence[EventType],
     initial_market: HousingMarket,
 ) -> DataFrame[EventFact]:
-    rows: list[EventRow] = [r for e in event_log if (r := event_to_row(e)) is not None]
+    rows = [r for e in event_log if (r := event_to_row(e))]
     df = pd.DataFrame(rows)
     return EventFact.validate(df.reset_index(drop=True))

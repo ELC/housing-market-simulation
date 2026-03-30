@@ -1,11 +1,11 @@
-from collections.abc import Sequence
+from collections.abc import MutableSequence
 from typing import Self
 
 from pydantic import ConfigDict, Field
 
 from core.base import FrozenModel
 from core.engine.queue import EventQueue
-from core.events import EventType
+from core.events import Event
 from core.market import HousingMarket
 from core.registry import SignalRegistry
 
@@ -17,18 +17,18 @@ class SimulationEngine(FrozenModel):
     queue: EventQueue
     registry: SignalRegistry
     now: float = 0.0
-    event_log: Sequence[EventType] = Field(default_factory=list)
+    event_log: MutableSequence[Event] = Field(default_factory=list[Event])
 
     def step(self) -> Self:
         event, queue = self.queue.pop()
 
-        if not event.validate(self.market):
+        if not event.is_valid(self.market):
             return self.model_copy(update={"queue": queue, "now": event.time})
 
         market, emitted = event.apply(self.market)
         invalid = self.registry.propagate(event.invalidates())
 
-        new_events: list[EventType] = list(emitted)
+        new_events = emitted
 
         for entity in market.entities:
             if entity.DEPENDS_ON & invalid:

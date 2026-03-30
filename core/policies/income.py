@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
 from core.events.base import Event
 from core.policies.protocol import AgentPolicy
@@ -10,7 +10,9 @@ if TYPE_CHECKING:
 
 
 class IncomePolicy(AgentPolicy):
-    DEPENDS_ON: ClassVar[frozenset[Signal]] = frozenset()
+    @property
+    def DEPENDS_ON(self) -> frozenset[Signal]:
+        return frozenset()
 
     def decide(self, agent: "Agent", market: "HousingMarket", now: float) -> list[Event]:
         return []

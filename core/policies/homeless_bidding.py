@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
 from core.events import Bid
 from core.events.base import Event
@@ -12,7 +12,9 @@ if TYPE_CHECKING:
 
 
 class HomelessBiddingPolicy(AgentPolicy):
-    DEPENDS_ON: ClassVar[frozenset[Signal]] = frozenset({Signal.HOMELESSNESS, Signal.MARKET_RENT})
+    @property
+    def DEPENDS_ON(self) -> frozenset[Signal]:
+        return frozenset({Signal.HOMELESSNESS, Signal.MARKET_RENT})
 
     def decide(self, agent: "Agent", market: "HousingMarket", now: float) -> list[Event]:
         if not agent.is_homeless(market):

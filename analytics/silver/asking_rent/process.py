@@ -1,4 +1,5 @@
 import math
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from pandera.typing import DataFrame
@@ -6,6 +7,9 @@ from pandera.typing import DataFrame
 from analytics.bronze.event_facts.schema import EventFact
 from analytics.silver.asking_rent.schema import HouseRentLog
 from core.market import HousingMarket
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 
 def project_asking_rent(
@@ -52,7 +56,7 @@ def project_asking_rent(
     )
 
     auction_set: set[float] = set(facts.query(f"{EventFact.event_type} == 'auction_clear'")[EventFact.time])
-    eviction_dict: dict[float, set[str]] = evicts.groupby(EventFact.time)[EventFact.house_id].apply(set).to_dict()
+    eviction_dict: Mapping[float, set[str]] = evicts.groupby(EventFact.time)[EventFact.house_id].apply(set).to_dict()
 
     clearing = starts[[EventFact.time, EventFact.house_id]].merge(
         facts.query(f"{EventFact.event_type} == 'rent_collected'"),
@@ -70,10 +74,10 @@ def project_asking_rent(
     prev_vacant: set[str] = set(house_ids)
 
     for t in event_times:
-        curr_vacant: set[str] = {hid for hid in house_ids if occ_wide.loc[t, hid] == "vacant"}
+        curr_vacant = {hid for hid in house_ids if occ_wide[hid][t] == "vacant"}
 
         if t in auction_set:
-            was_vacant = prev_vacant | eviction_dict.get(t, set())
+            was_vacant = prev_vacant | eviction_dict.get(t, set[str]())
             for hid in was_vacant & curr_vacant:
                 rent[hid] *= decay
             for hid in was_vacant - curr_vacant:

@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 class Event(FrozenModel, ABC):
     time: float
 
-    def validate(self, market: "HousingMarket") -> bool:
+    def is_valid(self, market: "HousingMarket") -> bool:
         return True
 
     def invalidates(self) -> set[Signal]:
@@ -22,4 +22,4 @@ class Event(FrozenModel, ABC):
         raise NotImplementedError
 
 
-type ApplyResult = tuple[HousingMarket, Sequence[Event]]
+type ApplyResult = tuple[HousingMarket, list[Event]]

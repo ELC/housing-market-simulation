@@ -1,17 +1,16 @@
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from functools import cached_property
 from typing import Self
 
 from core.agent import Agent
 from core.base import FrozenModel
-from core.entity import Entity
 from core.events import Bid
 from core.house import House
 from core.settings import SimulationSettings
 
 
 class HousingMarket(FrozenModel):
-    entities: Sequence[Entity]
+    entities: Sequence[House | Agent]
     settings: SimulationSettings
     pending_bids: Sequence[Bid] = ()
 
@@ -31,6 +30,6 @@ class HousingMarket(FrozenModel):
     def house_map(self) -> dict[str, House]:
         return {h.id: h for h in self.houses}
 
-    def update_entities(self, updates: dict[str, Entity]) -> Self:
+    def update_entities(self, updates: Mapping[str, House | Agent]) -> Self:
         updated = tuple(updates.get(e.id, e) for e in self.entities)
         return self.model_copy(update={"entities": updated})

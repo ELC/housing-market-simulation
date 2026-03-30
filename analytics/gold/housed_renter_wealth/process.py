@@ -1,13 +1,8 @@
-from typing import TYPE_CHECKING
-
 from pandera.typing import DataFrame
 
 from analytics.gold.housed_renter_wealth.schema import HousedRenterWealth
 from analytics.silver.occupancy.schema import OccupancyLog
 from analytics.silver.wealth.schema import WealthLog
-
-if TYPE_CHECKING:
-    import pandas as pd
 
 
 def build_housed_renter_wealth(
@@ -15,7 +10,7 @@ def build_housed_renter_wealth(
     occupancy: DataFrame[OccupancyLog],
 ) -> DataFrame[HousedRenterWealth]:
     """Keep only wealth rows where the renter is housed (exclude homeless and landlord)."""
-    housed_agents: pd.DataFrame = (
+    housed_agents = (
         occupancy
         .query(f"{OccupancyLog.occupant} != 'vacant'")[[OccupancyLog.time, OccupancyLog.occupant]]
         .rename(

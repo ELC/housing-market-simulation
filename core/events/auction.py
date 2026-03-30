@@ -74,7 +74,7 @@ class AuctionClear(Event):
         return updated, [rent_event]
 
     def _handle_construction(self, house: House) -> House:
-        state = house.state
-        if state.remaining_time <= 0:
+        assert isinstance(house.state, ConstructionState)
+        if house.state.remaining_time <= 0:
             return house.model_copy(update={"state": VacantState(last_update_time=self.time)})
-        return house.model_copy(update={"state": ConstructionState(remaining_time=state.remaining_time - 1)})
+        return house.model_copy(update={"state": ConstructionState(remaining_time=house.state.remaining_time - 1)})

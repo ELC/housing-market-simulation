@@ -1,5 +1,3 @@
-import operator
-
 import pandas as pd
 from pandera.typing import DataFrame
 
@@ -45,8 +43,8 @@ def project_time_to_rent(
         vacancy_starts
         .merge(vacancy_ends, on=[EventFact.house_id, "rank"])
         .assign(**{
-            TimeToRent.time: operator.itemgetter("end"),
-            TimeToRent.house: operator.itemgetter(EventFact.house_id),
+            TimeToRent.time: lambda df: df["end"],
+            TimeToRent.house: lambda df: df[EventFact.house_id],
             TimeToRent.duration: lambda df: df["end"] - df["start"],
         })[[TimeToRent.time, TimeToRent.house, TimeToRent.duration]]
         .pipe(TimeToRent.validate)

@@ -58,7 +58,7 @@ class RentDue(Event):
     tenant_id: str
     amount: float
 
-    def validate(self, market: "HousingMarket") -> bool:
+    def is_valid(self, market: "HousingMarket") -> bool:
         house = market.house_map[self.house_id]
         return house.occupant_id() == self.tenant_id
 

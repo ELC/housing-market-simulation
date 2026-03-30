@@ -35,7 +35,7 @@ def project_occupancy(
         OccupancyLog.occupant: [h.occupant_id() or "vacant" for h in initial_market.houses],
     })
 
-    return (
+    stacked = (
         pd
         .concat([initials, starts, evicts], ignore_index=True)
         .sort_values(EventFact.time)
@@ -46,6 +46,11 @@ def project_occupancy(
         .ffill()
         .rename_axis(columns=OccupancyLog.house)
         .stack()
+    )
+    assert isinstance(stacked, pd.Series)
+
+    return (
+        stacked
         .rename(OccupancyLog.occupant)
         .reset_index()
         .pipe(OccupancyLog.validate)

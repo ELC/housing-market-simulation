@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
 from core.base import FrozenModel
 from core.events.base import Event
@@ -11,7 +11,9 @@ if TYPE_CHECKING:
 
 
 class AgentPolicy(FrozenModel):
-    DEPENDS_ON: ClassVar[frozenset[Signal]]
+    @property
+    @abstractmethod
+    def DEPENDS_ON(self) -> frozenset[Signal]: ...
 
     @abstractmethod
     def decide(

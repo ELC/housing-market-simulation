@@ -4,14 +4,15 @@ from collections.abc import Set as AbstractSet
 from pydantic import Field
 
 from core.base import FrozenModel
+from core.signals import Signal
 
 
 class SignalRegistry(FrozenModel):
-    dependencies: Mapping[str, frozenset[str]] = Field(default_factory=dict)
-    reverse_dependencies: Mapping[str, frozenset[str]] = Field(default_factory=dict)
+    dependencies: Mapping[Signal, frozenset[Signal]] = Field(default_factory=dict)
+    reverse_dependencies: Mapping[Signal, frozenset[Signal]] = Field(default_factory=dict)
 
-    def propagate(self, invalid: AbstractSet[str]) -> frozenset[str]:
-        result = set(invalid)
+    def propagate(self, invalid: AbstractSet[Signal]) -> frozenset[Signal]:
+        result: set[Signal] = set(invalid)
         queue = list(invalid)
 
         while queue:

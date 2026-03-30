@@ -9,8 +9,10 @@ from core.events import (
     AuctionClear,
     Bid,
     Event,
+    EventType,
     Evicted,
     RentCollected,
+    RentDue,
     RentStarted,
 )
 from core.market import HousingMarket
@@ -24,7 +26,7 @@ class EventRow(TypedDict):
     amount: float | None
 
 
-def event_to_row(event: Event) -> EventRow | None:
+def event_to_row(event: EventType) -> EventRow | None:
     match event:
         case AgentIncomeReceived(time=t, agent_id=aid, amount=amt):
             return EventRow(
@@ -74,6 +76,8 @@ def event_to_row(event: Event) -> EventRow | None:
                 house_id=None,
                 amount=None,
             )
+        case RentDue():
+            return None
 
 
 def build_fact_table(

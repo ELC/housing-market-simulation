@@ -33,7 +33,7 @@ class SimulationEngine(FrozenModel):
         new_events = list[EventType](emitted)
 
         for entity in market.all_entities():
-            if entity.DEPENDS_ON & invalid:
+            if entity.depends_on & invalid:
                 decisions = entity.decide(market, event.time)
                 new_events.extend(decisions)
 

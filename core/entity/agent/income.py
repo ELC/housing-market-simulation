@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 class IncomePolicy(AgentPolicy):
     @property
-    def DEPENDS_ON(self) -> frozenset[Signal]:
+    def depends_on(self) -> frozenset[Signal]:
         return frozenset()
 
     def decide(self, agent: "Agent", market: "HousingMarket", now: float) -> list[EventType]:

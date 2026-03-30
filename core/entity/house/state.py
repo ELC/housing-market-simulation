@@ -5,12 +5,12 @@ from core.signals import Signal
 
 
 class HouseState(FrozenModel):
-    DEPENDS_ON: ClassVar[frozenset[Signal]] = frozenset()
+    depends_on: ClassVar[frozenset[Signal]] = frozenset()
 
 
 class VacantState(HouseState):
     last_update_time: float = 0.0
-    DEPENDS_ON: ClassVar[frozenset[Signal]] = frozenset({Signal.MARKET_RENT})
+    depends_on: ClassVar[frozenset[Signal]] = frozenset({Signal.MARKET_RENT})
 
 
 class RentedState(HouseState):
@@ -18,7 +18,7 @@ class RentedState(HouseState):
 
 
 class OwnerOccupiedState(HouseState):
-    DEPENDS_ON: ClassVar[frozenset[Signal]] = frozenset({Signal.OWNER_MONEY})
+    depends_on: ClassVar[frozenset[Signal]] = frozenset({Signal.OWNER_MONEY})
 
 
 class ConstructionState(HouseState):

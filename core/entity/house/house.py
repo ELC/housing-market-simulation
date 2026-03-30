@@ -32,8 +32,8 @@ class House(Entity):
                 return None
 
     @property
-    def DEPENDS_ON(self) -> frozenset[Signal]:
-        return self.state.DEPENDS_ON
+    def depends_on(self) -> frozenset[Signal]:
+        return self.state.depends_on
 
     def decide(self, market: "HousingMarket", now: float) -> list["EventType"]:
         return []

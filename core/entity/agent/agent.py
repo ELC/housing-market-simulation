@@ -23,8 +23,8 @@ class Agent(Entity):
     age_weight: float = 0.1
 
     @property
-    def DEPENDS_ON(self) -> frozenset[Signal]:
-        return self.policy.DEPENDS_ON
+    def depends_on(self) -> frozenset[Signal]:
+        return self.policy.depends_on
 
     def is_homeless(self, market: "HousingMarket") -> bool:
         return all(h.occupant_id() != self.id for h in market.entities_of_type(House))

@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 class AgentPolicy(FrozenModel):
     @property
     @abstractmethod
-    def DEPENDS_ON(self) -> frozenset[Signal]: ...
+    def depends_on(self) -> frozenset[Signal]: ...
 
     @abstractmethod
     def decide(
@@ -30,10 +30,10 @@ class CompositeAgentPolicy(AgentPolicy):
     policies: tuple[AgentPolicy, ...]
 
     @property
-    def DEPENDS_ON(self) -> frozenset[Signal]:
+    def depends_on(self) -> frozenset[Signal]:
         deps: set[Signal] = set()
         for p in self.policies:
-            deps |= p.DEPENDS_ON
+            deps |= p.depends_on
         return frozenset(deps)
 
     def decide(self, agent: "Agent", market: "HousingMarket", now: float) -> list[EventType]:

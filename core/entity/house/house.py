@@ -1,4 +1,8 @@
+import math
+import random
 from typing import TYPE_CHECKING, ClassVar
+
+from pydantic import Field
 
 from core.entity.entity import Entity
 from core.entity.house.state import (
@@ -19,8 +23,8 @@ class House(Entity):
 
     owner_id: str
     state: HouseStateType
-    rent_price: float
-    age: int
+    rent_price: float = Field(default_factory=lambda: random.lognormvariate(math.log(15), 1))
+    age: int = Field(default_factory=lambda: random.randint(1, 20))
 
     def occupant_id(self) -> str | None:
         match self.state:

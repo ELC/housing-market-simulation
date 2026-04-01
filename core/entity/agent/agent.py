@@ -1,4 +1,8 @@
+import math
+import random
 from typing import TYPE_CHECKING, ClassVar
+
+from pydantic import Field
 
 from core.entity.agent.protocol import AgentPolicy
 from core.entity.entity import Entity
@@ -14,9 +18,9 @@ if TYPE_CHECKING:
 class Agent(Entity):
     identity: ClassVar[EntityIdentity] = EntityIdentity(provider="first_name")
 
-    money: float
-    income: float
-    spend_rate: float
+    money: float = Field(default_factory=lambda: random.lognormvariate(math.log(10), 1))
+    income: float = Field(default_factory=lambda: random.lognormvariate(math.log(6), 0.3))
+    spend_rate: float = Field(default_factory=lambda: random.uniform(0.1, 0.9))
     policy: AgentPolicy
 
     rent_weight: float = 1.0

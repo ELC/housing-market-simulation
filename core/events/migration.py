@@ -24,7 +24,12 @@ class AgentEntered(Event):
     def apply(
         self, market: HousingMarket, context: SimulationContext
     ) -> ApplyResult[AgentIncomeReceived | AgentLeft | AgentEntered]:
-        agent = Agent(id=self.agent_id, name=self.agent_name, policy=self.policy)
+        agent = Agent(
+            id=self.agent_id,
+            name=self.agent_name,
+            policy=self.policy,
+            homeless_since=self.time,
+        )
         new_market = market.update_entities({agent.id: agent})
 
         income = AgentIncomeReceived(
@@ -35,8 +40,9 @@ class AgentEntered(Event):
         left = AgentLeft(
             time=self.time + agent.max_homeless_periods,
             agent_id=agent.id,
+            homeless_since=self.time,
         )
-        next_interval = random.expovariate(1 / market.settings.migration_interval)  # noqa: S311
+        next_interval = random.expovariate(1 / market.settings.migration_interval)
         next_id, next_name = next(Agent.identity)
         next_entry = AgentEntered(
             time=self.time + next_interval,
@@ -50,13 +56,15 @@ class AgentEntered(Event):
 
 class AgentLeft(Event):
     agent_id: str
+    homeless_since: float
 
     invalidates: ClassVar[frozenset[Signal]] = frozenset({Signal.HOMELESSNESS, Signal.MARKET_RENT})
 
     def is_valid(self, market: HousingMarket) -> bool:
         if not market.has_entity(self.agent_id, Agent):
             return False
-        return market.get(self.agent_id, Agent).is_homeless(market)
+        agent = market.get(self.agent_id, Agent)
+        return agent.homeless_since == self.homeless_since
 
     def apply(
         self, market: HousingMarket, context: SimulationContext

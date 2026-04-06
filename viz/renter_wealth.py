@@ -18,9 +18,9 @@ def plot_renter_wealth(
             y=RenterWealth.money,
             hue=RenterWealth.agent,
             ax=ax,
+            legend=False,
         )
         ax.set_title("Renter Wealth Over Time")
         ax.set_xlabel("Time")
         ax.set_ylabel("Money")
-        sns.move_legend(ax, "upper left")
     return fig, ax

@@ -14,4 +14,4 @@ class SimulationSettings(FrozenModel):
     vacancy_decay_rate: float = 0.05
     aging_interval: float = 12
     reconstruction_delay: int = 5
-    migration_interval: float = 50
+    migration_interval: float = 10

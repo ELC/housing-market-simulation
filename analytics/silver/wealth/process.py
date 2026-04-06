@@ -45,7 +45,7 @@ def project_wealth(
         "delta": [a.money for a in agents],
     })
 
-    stacked = (
+    pivot = (
         pd
         .concat([initials, inc, debits, credits], ignore_index=True)
         .sort_values(EventFact.time, kind="mergesort")
@@ -55,6 +55,18 @@ def project_wealth(
         .unstack(WealthLog.agent)
         .reindex(event_times)
         .ffill()
+    )
+
+    departures = (
+        facts.query(f"{EventFact.event_type} == 'agent_left'")
+        .set_index(EventFact.agent_id)[EventFact.time]
+    )
+    for aid, dep_time in departures.items():
+        if aid in pivot.columns:
+            pivot.loc[pivot.index > dep_time, aid] = float("nan")
+
+    stacked = (
+        pivot
         .rename_axis(columns=WealthLog.agent)
         .stack()
         .dropna()

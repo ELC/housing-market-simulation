@@ -1,5 +1,6 @@
 from analytics.gold.agent_population import AgentPopulation, build_agent_population
 from analytics.gold.house_rents import HouseRents, build_house_rents
+from analytics.gold.migration_flows import MigrationFlows, build_migration_flows
 from analytics.gold.housed_renter_wealth import (
     HousedRenterWealth,
     build_housed_renter_wealth,
@@ -26,6 +27,7 @@ from analytics.gold.wealth_spread import WealthSpread, build_wealth_spread
 __all__ = [
     "AgentPopulation",
     "HouseRents",
+    "MigrationFlows",
     "HousedRenterWealth",
     "OccupancyTimeline",
     "RentComparison",
@@ -37,6 +39,7 @@ __all__ = [
     "WealthQuartiles",
     "build_agent_population",
     "build_house_rents",
+    "build_migration_flows",
     "build_housed_renter_wealth",
     "build_occupancy_timeline",
     "build_rent_comparison",

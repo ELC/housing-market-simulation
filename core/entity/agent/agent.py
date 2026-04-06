@@ -28,6 +28,7 @@ class Agent(Entity):
     horizon: float = Field(default_factory=lambda: random.uniform(10, 30))
     max_vacancy_periods: float = Field(default_factory=lambda: random.uniform(50, 100))
     max_homeless_periods: float = Field(default_factory=lambda: random.uniform(20, 60))
+    homeless_since: float | None = None
 
     @property
     def depends_on(self) -> frozenset[Signal]:

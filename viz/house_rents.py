@@ -20,6 +20,7 @@ def plot_house_rents(
             ax=ax,
             alpha=0.5,
             linewidth=1,
+            legend=False,
         )
         sns.lineplot(
             data=data,
@@ -33,5 +34,5 @@ def plot_house_rents(
         ax.set_title("House Asking Rents Over Time")
         ax.set_xlabel("Time")
         ax.set_ylabel("Rent Price")
-        sns.move_legend(ax, "upper right")
+        ax.legend()
     return fig, ax

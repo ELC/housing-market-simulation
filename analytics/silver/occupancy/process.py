@@ -18,6 +18,7 @@ def _initial_occupant(house: House) -> str:
 def project_occupancy(
     facts: DataFrame[EventFact],
     initial_market: HousingMarket,
+    agent_names: dict[str, str] | None = None,
 ) -> DataFrame[OccupancyLog]:
     event_times: list[float] = sorted(facts[EventFact.time].unique())
 
@@ -68,9 +69,9 @@ def project_occupancy(
     ])
 
     houses = initial_market.entities_of_type(House)
-    agents = initial_market.entities_of_type(Agent)
     house_names: dict[str, str] = {h.id: h.name for h in houses}
-    agent_names: dict[str, str] = {a.id: a.name for a in agents}
+    if agent_names is None:
+        agent_names = {a.id: a.name for a in initial_market.entities_of_type(Agent)}
 
     initials = pd.DataFrame({
         EventFact.time: [0.0] * len(houses),

@@ -11,9 +11,11 @@ from core.market import HousingMarket
 def project_wealth(
     facts: DataFrame[EventFact],
     initial_market: HousingMarket,
+    agent_names: dict[str, str] | None = None,
 ) -> DataFrame[WealthLog]:
     agents = initial_market.entities_of_type(Agent)
-    agent_names: dict[str, str] = {a.id: a.name for a in agents}
+    if agent_names is None:
+        agent_names = {a.id: a.name for a in agents}
     house_owners: dict[str, str] = {h.id: h.owner_id for h in initial_market.entities_of_type(House)}
     event_times: list[float] = sorted(facts[EventFact.time].unique())
 
@@ -55,6 +57,7 @@ def project_wealth(
         .ffill()
         .rename_axis(columns=WealthLog.agent)
         .stack()
+        .dropna()
     )
     assert isinstance(stacked, pd.Series)
 

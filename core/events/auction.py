@@ -4,6 +4,7 @@ import math
 from collections import defaultdict
 from typing import TYPE_CHECKING, ClassVar, Self
 
+from core.entity.agent import Agent
 from core.entity.house import ConstructionState, House, VacantState
 from core.events.base import ApplyResult, Event
 from core.events.rent import RentStarted
@@ -58,7 +59,12 @@ class AuctionClear(Event):
         matched: set[str],
     ) -> tuple[float, list[RentStarted]]:
         bids = bids_by_house.get(house.id, [])
-        valid = [b for b in bids if b.price >= house.rent_price and b.agent_id not in matched]
+        valid = [
+            b for b in bids
+            if b.price >= house.rent_price
+            and b.agent_id not in matched
+            and market.has_entity(b.agent_id, Agent)
+        ]
 
         if not valid:
             decay = math.exp(-market.settings.vacancy_decay_rate)

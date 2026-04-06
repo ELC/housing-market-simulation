@@ -56,11 +56,16 @@ class RentExpired(Event):
         house = market.get(self.house_id, House)
         return house.occupant_id() == self.tenant_id
 
-    def apply(self, market: HousingMarket, context: SimulationContext) -> ApplyResult[Never]:
+    def apply(self, market: HousingMarket, context: SimulationContext) -> ApplyResult[AgentLeft]:
         house = market.get(self.house_id, House)
+        tenant = market.get(self.tenant_id, Agent)
         updated_house = house.model_copy(update={"state": VacantState(last_update_time=self.time)})
         new_market = market.update_entities({house.id: updated_house})
-        return new_market, context, []
+
+        from core.events.migration import AgentLeft
+
+        left = AgentLeft(time=self.time + tenant.max_homeless_periods, agent_id=self.tenant_id)
+        return new_market, context, [left]
 
 
 class RentCollected(Event):

@@ -13,7 +13,9 @@ from core.entity.house import (
 from core.context import SimulationContext
 from core.engine import EventQueue, QueueItem, SimulationEngine
 from core.events import (
+    AgentEntered,
     AgentIncomeReceived,
+    AgentLeft,
     ApplyResult,
     AuctionClear,
     Bid,
@@ -41,7 +43,9 @@ from core.signals import Signal
 
 __all__ = [
     "Agent",
+    "AgentEntered",
     "AgentIncomeReceived",
+    "AgentLeft",
     "AgentPolicy",
     "ApplyResult",
     "AuctionClear",

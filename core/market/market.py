@@ -27,10 +27,20 @@ class HousingMarket(FrozenModel):
     def all_entities(self) -> tuple[EntityType, ...]:
         return tuple(e for bucket in self.entities.values() for e in bucket.values())
 
+    def has_entity[T: Entity](self, entity_id: str, entity_type: type[T]) -> bool:
+        return entity_id in self.entities.get(entity_type, {})
+
     def update_entities(self, updates: Mapping[str, EntityType]) -> Self:
         new_entities: defaultdict[type[Entity], dict[str, EntityType]] = defaultdict(
             dict, {t: dict(m) for t, m in self.entities.items()}
         )
         for e in updates.values():
             new_entities[type(e)][e.id] = e
+        return self.model_copy(update={"entities": new_entities})
+
+    def remove_entity[T: Entity](self, entity_id: str, entity_type: type[T]) -> Self:
+        new_entities: defaultdict[type[Entity], dict[str, EntityType]] = defaultdict(
+            dict, {t: dict(m) for t, m in self.entities.items()}
+        )
+        del new_entities[entity_type][entity_id]
         return self.model_copy(update={"entities": new_entities})

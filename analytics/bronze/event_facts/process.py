@@ -6,7 +6,9 @@ from pandera.typing import DataFrame
 
 from analytics.bronze.event_facts.schema import EventFact
 from core.events import (
+    AgentEntered,
     AgentIncomeReceived,
+    AgentLeft,
     AuctionClear,
     Bid,
     EventType,
@@ -102,6 +104,22 @@ def event_to_row(event: EventType) -> EventRow | None:  # noqa: PLR0911
                 agent_id=None,
                 house_id=hid,
                 amount=float(ct),
+            )
+        case AgentEntered(time=t, agent_id=aid):
+            return EventRow(
+                time=t,
+                event_type="agent_entered",
+                agent_id=aid,
+                house_id=None,
+                amount=None,
+            )
+        case AgentLeft(time=t, agent_id=aid):
+            return EventRow(
+                time=t,
+                event_type="agent_left",
+                agent_id=aid,
+                house_id=None,
+                amount=None,
             )
         case RentDue() | _:
             return None

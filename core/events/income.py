@@ -8,6 +8,8 @@ if TYPE_CHECKING:
     from core.context import SimulationContext
     from core.market import HousingMarket
 
+
+
 _INCOME_NOISE = Stochastic(sigma=0.1)
 _SPEND_RATE_NOISE = Stochastic(sigma=0.05, high=1.0)
 
@@ -15,6 +17,9 @@ _SPEND_RATE_NOISE = Stochastic(sigma=0.05, high=1.0)
 class AgentIncomeReceived(Event):
     agent_id: str
     amount: float
+
+    def is_valid(self, market: "HousingMarket") -> bool:
+        return market.has_entity(self.agent_id, Agent)
 
     @staticmethod
     def compute_salary(agent: Agent) -> float:

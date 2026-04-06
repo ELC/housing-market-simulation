@@ -8,6 +8,7 @@ from viz.rent_duration import plot_rent_duration
 from viz.renter_wealth import plot_renter_wealth
 from viz.time_to_rent import plot_time_to_rent
 from viz.vacancy import plot_vacancy
+from viz.wealth_quartiles import plot_wealth_quartiles, plot_wealth_spread
 
 __all__ = [
     "chart",
@@ -20,4 +21,6 @@ __all__ = [
     "plot_renter_wealth",
     "plot_time_to_rent",
     "plot_vacancy",
+    "plot_wealth_quartiles",
+    "plot_wealth_spread",
 ]

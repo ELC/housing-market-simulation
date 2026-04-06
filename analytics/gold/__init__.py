@@ -20,6 +20,7 @@ from analytics.gold.time_to_rent_rolling import (
 )
 from analytics.gold.vacancy_count import VacancyCount, build_vacancy_count
 from analytics.gold.wealth_quartiles import WealthQuartiles, build_wealth_quartiles
+from analytics.gold.wealth_spread import WealthSpread, build_wealth_spread
 
 __all__ = [
     "HouseRents",
@@ -42,4 +43,6 @@ __all__ = [
     "build_time_to_rent_rolling",
     "build_vacancy_count",
     "build_wealth_quartiles",
+    "WealthSpread",
+    "build_wealth_spread",
 ]

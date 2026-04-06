@@ -29,6 +29,12 @@ def project_asking_rent(
     expired = facts.query(f"{EventFact.event_type} == 'rent_expired'")[[EventFact.time, EventFact.house_id]]
     vacated = pd.concat([evicts, expired], ignore_index=True)
     demolished = facts.query(f"{EventFact.event_type} == 'house_demolished'")[[EventFact.time, EventFact.house_id]]
+    rebuilt_raw = facts.query(f"{EventFact.event_type} == 'house_rebuilt'")
+    rebuilt = rebuilt_raw[[EventFact.time, EventFact.house_id]]
+    rebuild_completions = pd.DataFrame([
+        {EventFact.time: row[EventFact.time] + row[EventFact.amount], EventFact.house_id: row[EventFact.house_id], "occupant": "vacant"}
+        for _, row in rebuilt_raw.iterrows()
+    ])
 
     initial_occupants = [
         "construction" if isinstance(h.state, ConstructionState) else (h.occupant_id() or "vacant")
@@ -51,6 +57,8 @@ def project_asking_rent(
             starts.rename(columns={EventFact.agent_id: "occupant"}),
             vacated.assign(occupant="vacant"),
             demolished.assign(occupant="demolished"),
+            rebuilt.assign(occupant="construction"),
+            rebuild_completions,
         ],
         ignore_index=True,
     ).sort_values(EventFact.time)

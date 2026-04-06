@@ -61,5 +61,5 @@ def plot_occupancy(
         ax.set_title("House Occupancy Timeline")
         ax.set_xlabel("Time")
         ax.set_ylabel("")
-        sns.move_legend(ax, "center left", bbox_to_anchor=(1, 0.5))
+        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
     return fig, ax

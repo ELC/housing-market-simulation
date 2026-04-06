@@ -1,4 +1,4 @@
-from core.events.aging import HouseAged, HouseDemolished
+from core.events.aging import HouseAged, HouseDemolished, HouseRebuilt, ReconstructionCheck
 from core.events.auction import AuctionClear
 from core.events.base import ApplyResult
 from core.events.bid import Bid
@@ -17,6 +17,8 @@ EventType = (
     | AuctionClear
     | HouseAged
     | HouseDemolished
+    | ReconstructionCheck
+    | HouseRebuilt
 )
 
 __all__ = [
@@ -28,6 +30,8 @@ __all__ = [
     "Evicted",
     "HouseAged",
     "HouseDemolished",
+    "HouseRebuilt",
+    "ReconstructionCheck",
     "RentCollected",
     "RentDue",
     "RentExpired",

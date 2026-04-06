@@ -24,6 +24,7 @@ class Agent(Entity):
     policy: AgentPolicy
 
     age_weight: float = Field(default_factory=lambda: random.uniform(0.05, 0.2))
+    expected_rent: float = Field(default_factory=lambda: random.lognormvariate(math.log(5), 0.3))
     horizon: float = Field(default_factory=lambda: random.uniform(10, 30))
     max_vacancy_periods: float = Field(default_factory=lambda: random.uniform(50, 100))
 

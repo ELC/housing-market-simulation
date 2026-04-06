@@ -1,13 +1,16 @@
+import seaborn as sns
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from pandera.typing import DataFrame
 
 from analytics.gold import RentDurationRolling
+from core.settings import SimulationSettings
 from viz.base import chart
 
 
 def plot_rent_duration(
     data: DataFrame[RentDurationRolling],
+    settings: SimulationSettings | None = None,
     figsize: tuple[float, float] = (14, 4),
 ) -> tuple[Figure, Axes]:
     with chart(figsize) as (fig, ax):
@@ -19,22 +22,17 @@ def plot_rent_duration(
             color="C0",
             label="individual",
         )
-        ax.plot(
-            data[RentDurationRolling.time],
-            data[RentDurationRolling.rolling_mean],
+        sns.lineplot(
+            data=data,
+            x=RentDurationRolling.time,
+            y=RentDurationRolling.duration,
             color="C1",
-            linewidth=2,
-            label="running mean",
+            ax=ax,
         )
-        ax.fill_between(
-            data[RentDurationRolling.time],
-            data[RentDurationRolling.rolling_mean] - 1.96 * data[RentDurationRolling.rolling_std],
-            data[RentDurationRolling.rolling_mean] + 1.96 * data[RentDurationRolling.rolling_std],
-            alpha=0.2,
-            color="C1",
-            label="95% CI",
-        )
-        ax.set_title("Rent Duration (Time Until Eviction)")
+        if settings is not None:
+            ax.axhline(settings.min_lease_duration, ls="--", color="C2", lw=1, label="min lease")
+            ax.axhline(settings.max_lease_duration, ls="--", color="C3", lw=1, label="max lease")
+        ax.set_title("Rent Duration (Time Until Vacancy)")
         ax.set_xlabel("Time")
         ax.set_ylabel("Duration (periods)")
         ax.legend()

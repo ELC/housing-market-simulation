@@ -13,3 +13,4 @@ class SimulationSettings(FrozenModel):
     max_lease_duration: int = 24
     vacancy_decay_rate: float = 0.05
     aging_interval: float = 12
+    reconstruction_delay: int = 5

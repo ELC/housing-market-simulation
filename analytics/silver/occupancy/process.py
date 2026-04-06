@@ -51,6 +51,22 @@ def project_occupancy(
         .assign(**{OccupancyLog.occupant: "demolished"})
     )
 
+    rebuilt_raw = facts.query(f"{EventFact.event_type} == 'house_rebuilt'")
+    rebuilt = (
+        rebuilt_raw[[EventFact.time, EventFact.house_id]]
+        .rename(columns={EventFact.house_id: OccupancyLog.house})
+        .assign(**{OccupancyLog.occupant: "construction"})
+    )
+
+    rebuild_completions = pd.DataFrame([
+        {
+            EventFact.time: row[EventFact.time] + row[EventFact.amount],
+            OccupancyLog.house: row[EventFact.house_id],
+            OccupancyLog.occupant: "vacant",
+        }
+        for _, row in rebuilt_raw.iterrows()
+    ])
+
     houses = initial_market.entities_of_type(House)
     agents = initial_market.entities_of_type(Agent)
     house_names: dict[str, str] = {h.id: h.name for h in houses}
@@ -74,7 +90,7 @@ def project_occupancy(
 
     stacked = (
         pd
-        .concat([initials, completions, starts, evicts, expired, demolished], ignore_index=True)
+        .concat([initials, completions, starts, evicts, expired, demolished, rebuilt, rebuild_completions], ignore_index=True)
         .sort_values(EventFact.time)
         .groupby([OccupancyLog.house, EventFact.time])[OccupancyLog.occupant]
         .last()

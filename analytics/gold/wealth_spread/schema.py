@@ -2,11 +2,9 @@ import pandera as pa
 from pandera.typing import Series
 
 
-class WealthQuartiles(pa.DataFrameModel):
+class WealthSpread(pa.DataFrameModel):
     time: Series[float] = pa.Field(ge=0)
-    agent: Series[str]
-    quartile: Series[str]
-    money: Series[float]
+    spread: Series[float]
 
     class Config:
         coerce = True

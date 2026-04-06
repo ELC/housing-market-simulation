@@ -12,6 +12,7 @@ from core.events import (
     EventType,
     Evicted,
     HouseDemolished,
+    HouseRebuilt,
     RentCollected,
     RentDue,
     RentExpired,
@@ -93,6 +94,14 @@ def event_to_row(event: EventType) -> EventRow | None:  # noqa: PLR0911
                 agent_id=None,
                 house_id=hid,
                 amount=None,
+            )
+        case HouseRebuilt(time=t, house_id=hid, construction_time=ct):
+            return EventRow(
+                time=t,
+                event_type="house_rebuilt",
+                agent_id=None,
+                house_id=hid,
+                amount=float(ct),
             )
         case RentDue() | _:
             return None

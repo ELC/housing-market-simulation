@@ -6,7 +6,10 @@ from pandera.typing import DataFrame
 from analytics.bronze.event_facts.schema import EventFact
 from analytics.silver.asking_rent.schema import HouseRentLog
 from core.entity.house import House
+from core.entity.house.state import ConstructionState
 from core.market import HousingMarket
+
+_OFF_MARKET = {"construction", "demolished"}
 
 
 def project_asking_rent(
@@ -23,16 +26,31 @@ def project_asking_rent(
         [EventFact.time, EventFact.house_id, EventFact.agent_id]
     ]
     evicts = facts.query(f"{EventFact.event_type} == 'evicted'")[[EventFact.time, EventFact.house_id]]
+    expired = facts.query(f"{EventFact.event_type} == 'rent_expired'")[[EventFact.time, EventFact.house_id]]
+    vacated = pd.concat([evicts, expired], ignore_index=True)
+    demolished = facts.query(f"{EventFact.event_type} == 'house_demolished'")[[EventFact.time, EventFact.house_id]]
+
+    initial_occupants = [
+        "construction" if isinstance(h.state, ConstructionState) else (h.occupant_id() or "vacant")
+        for h in houses
+    ]
+    completions = pd.DataFrame([
+        {EventFact.time: float(h.state.remaining_time), EventFact.house_id: h.id, "occupant": "vacant"}
+        for h in houses
+        if isinstance(h.state, ConstructionState)
+    ])
 
     occ_events = pd.concat(
         [
             pd.DataFrame({
                 EventFact.time: [0.0] * len(house_ids),
                 EventFact.house_id: house_ids,
-                "occupant": ["vacant"] * len(house_ids),
+                "occupant": initial_occupants,
             }),
+            completions,
             starts.rename(columns={EventFact.agent_id: "occupant"}),
-            evicts.assign(occupant="vacant"),
+            vacated.assign(occupant="vacant"),
+            demolished.assign(occupant="demolished"),
         ],
         ignore_index=True,
     ).sort_values(EventFact.time)
@@ -49,7 +67,7 @@ def project_asking_rent(
     )
 
     auction_set: set[float] = set(facts.query(f"{EventFact.event_type} == 'auction_clear'")[EventFact.time])
-    eviction_dict = evicts.groupby(EventFact.time)[EventFact.house_id].apply(set).to_dict()
+    eviction_dict = vacated.groupby(EventFact.time)[EventFact.house_id].apply(set).to_dict()
 
     clearing = starts[[EventFact.time, EventFact.house_id]].merge(
         facts.query(f"{EventFact.event_type} == 'rent_collected'"),
@@ -68,6 +86,7 @@ def project_asking_rent(
 
     for t in event_times:
         curr_vacant = {hid for hid in house_ids if occ_wide[hid][t] == "vacant"}
+        on_market = {hid for hid in house_ids if occ_wide[hid][t] not in _OFF_MARKET}
 
         if t in auction_set:
             was_vacant = prev_vacant | eviction_dict.get(t, set[str]())
@@ -83,7 +102,7 @@ def project_asking_rent(
                 HouseRentLog.house: house_names[hid],
                 HouseRentLog.rent: rent[hid],
             }
-            for hid in house_ids
+            for hid in on_market
         )
 
         prev_vacant = curr_vacant

@@ -8,6 +8,10 @@ from analytics.gold.occupancy_timeline import (
     build_occupancy_timeline,
 )
 from analytics.gold.rent_comparison import RentComparison, build_rent_comparison
+from analytics.gold.rent_duration_rolling import (
+    RentDurationRolling,
+    build_rent_duration_rolling,
+)
 from analytics.gold.rent_payments import RentPayments, build_rent_payments
 from analytics.gold.renter_wealth import RenterWealth, build_renter_wealth
 from analytics.gold.time_to_rent_rolling import (
@@ -21,6 +25,7 @@ __all__ = [
     "HousedRenterWealth",
     "OccupancyTimeline",
     "RentComparison",
+    "RentDurationRolling",
     "RentPayments",
     "RenterWealth",
     "TimeToRentRolling",
@@ -29,6 +34,7 @@ __all__ = [
     "build_housed_renter_wealth",
     "build_occupancy_timeline",
     "build_rent_comparison",
+    "build_rent_duration_rolling",
     "build_rent_payments",
     "build_renter_wealth",
     "build_time_to_rent_rolling",

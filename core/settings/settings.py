@@ -7,5 +7,9 @@ class SimulationSettings(FrozenModel):
     tax_per_house: float = 5
     maintenance_base: float = 1
     maintenance_slope: float = 0.1
-    construction_time: int = 5
+    min_construction_time: int = 5
+    max_construction_time: int = 30
+    min_lease_duration: int = 6
+    max_lease_duration: int = 24
     vacancy_decay_rate: float = 0.05
+    aging_interval: float = 12

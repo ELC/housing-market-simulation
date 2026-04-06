@@ -18,14 +18,20 @@ def project_time_to_rent(
         EventFact.house_id: [h.id for h in houses],
     })
 
+    vacated = pd.concat(
+        [
+            facts.query(f"{EventFact.event_type} == 'evicted'")[[EventFact.time, EventFact.house_id]],
+            facts.query(f"{EventFact.event_type} == 'rent_expired'")[[EventFact.time, EventFact.house_id]],
+        ],
+        ignore_index=True,
+    )
+
     vacancy_starts = (
         pd
         .concat(
             [
                 initial_vacant,
-                facts.query(f"{EventFact.event_type} == 'evicted'")[[EventFact.time, EventFact.house_id]].rename(
-                    columns={EventFact.time: "start"}
-                ),
+                vacated.rename(columns={EventFact.time: "start"}),
             ],
             ignore_index=True,
         )

@@ -11,13 +11,18 @@ def plot_occupancy(
     data: DataFrame[OccupancyTimeline],
     figsize: tuple[float, float] = (14, 5),
 ) -> tuple[Figure, Axes]:
+    special_states = {"vacant", "construction", "demolished"}
     renter_names: list[str] = sorted(
         data.loc[
-            data[OccupancyTimeline.occupant] != "vacant",
+            ~data[OccupancyTimeline.occupant].isin(special_states),
             OccupancyTimeline.occupant,
         ].unique()
     )
-    palette: dict[str, str] = {"vacant": "#dddddd"}
+    palette: dict[str, str] = {
+        "vacant": "#dddddd",
+        "construction": "#FFB347",
+        "demolished": "#888888",
+    }
     palette.update({name: f"C{i}" for i, name in enumerate(renter_names)})
 
     with chart(figsize) as (fig, ax):

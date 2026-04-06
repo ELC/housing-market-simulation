@@ -3,6 +3,7 @@ from core.base import FrozenModel
 from core.entity import Agent, Entity, EntityIdentity, EntityType, House
 from core.entity.house import (
     ConstructionState,
+    DemolishedState,
     HouseState,
     HouseStateType,
     OwnerOccupiedState,
@@ -18,8 +19,11 @@ from core.events import (
     Bid,
     EventType,
     Evicted,
+    HouseAged,
+    HouseDemolished,
     RentCollected,
     RentDue,
+    RentExpired,
     RentStarted,
 )
 from core.entity.agent import (
@@ -42,6 +46,7 @@ __all__ = [
     "Bid",
     "CompositeAgentPolicy",
     "ConstructionState",
+    "DemolishedState",
     "Entity",
     "EntityIdentity",
     "EntityType",
@@ -51,6 +56,8 @@ __all__ = [
     "FrozenModel",
     "HomelessBiddingPolicy",
     "House",
+    "HouseAged",
+    "HouseDemolished",
     "HouseState",
     "HouseStateType",
     "HousingMarket",
@@ -59,6 +66,7 @@ __all__ = [
     "QueueItem",
     "RentCollected",
     "RentDue",
+    "RentExpired",
     "RentStarted",
     "RentedState",
     "Signal",

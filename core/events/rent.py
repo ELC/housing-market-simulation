@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import random
+from typing import TYPE_CHECKING, ClassVar, Never
 
 from core.entity.agent import Agent
-from core.entity.house import House, RentedState
+from core.entity.house import House, RentedState, VacantState
 from core.events.base import ApplyResult, Event
 from core.events.eviction import Evicted
 from core.signals import Signal
@@ -17,10 +18,13 @@ class RentStarted(Event):
     house_id: str
     tenant_id: str
 
-    def invalidates(self) -> set[Signal]:
-        return {Signal.HOMELESSNESS}
+    invalidates: ClassVar[frozenset[Signal]] = frozenset({Signal.HOMELESSNESS})
 
-    def apply(self, market: HousingMarket, context: SimulationContext) -> ApplyResult[RentDue]:
+    def is_valid(self, market: HousingMarket) -> bool:
+        house = market.get(self.house_id, House)
+        return isinstance(house.state, VacantState)
+
+    def apply(self, market: HousingMarket, context: SimulationContext) -> ApplyResult[RentDue | RentExpired]:
         house = market.get(self.house_id, House)
         updated_house = house.model_copy(update={"state": RentedState(occupant_id=self.tenant_id)})
         due = RentDue(
@@ -29,8 +33,34 @@ class RentStarted(Event):
             tenant_id=self.tenant_id,
             amount=house.rent_price,
         )
+        lease_duration = random.randint(
+            market.settings.min_lease_duration,
+            market.settings.max_lease_duration,
+        )
+        expiry = RentExpired(
+            time=self.time + lease_duration,
+            house_id=self.house_id,
+            tenant_id=self.tenant_id,
+        )
         new_market = market.update_entities({house.id: updated_house})
-        return new_market, context, [due]
+        return new_market, context, [due, expiry]
+
+
+class RentExpired(Event):
+    house_id: str
+    tenant_id: str
+
+    invalidates: ClassVar[frozenset[Signal]] = frozenset({Signal.HOMELESSNESS, Signal.MARKET_RENT})
+
+    def is_valid(self, market: HousingMarket) -> bool:
+        house = market.get(self.house_id, House)
+        return house.occupant_id() == self.tenant_id
+
+    def apply(self, market: HousingMarket, context: SimulationContext) -> ApplyResult[Never]:
+        house = market.get(self.house_id, House)
+        updated_house = house.model_copy(update={"state": VacantState(last_update_time=self.time)})
+        new_market = market.update_entities({house.id: updated_house})
+        return new_market, context, []
 
 
 class RentCollected(Event):

@@ -1,6 +1,7 @@
 from core.entity.house.house import House
 from core.entity.house.state import (
     ConstructionState,
+    DemolishedState,
     HouseState,
     HouseStateType,
     OwnerOccupiedState,
@@ -10,6 +11,7 @@ from core.entity.house.state import (
 
 __all__ = [
     "ConstructionState",
+    "DemolishedState",
     "House",
     "HouseState",
     "HouseStateType",

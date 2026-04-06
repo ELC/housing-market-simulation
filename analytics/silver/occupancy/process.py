@@ -5,7 +5,14 @@ from analytics.bronze.event_facts.schema import EventFact
 from analytics.silver.occupancy.schema import OccupancyLog
 from core.entity.agent import Agent
 from core.entity.house import House
+from core.entity.house.state import ConstructionState
 from core.market import HousingMarket
+
+
+def _initial_occupant(house: House) -> str:
+    if isinstance(house.state, ConstructionState):
+        return "construction"
+    return house.occupant_id() or "vacant"
 
 
 def project_occupancy(
@@ -30,6 +37,20 @@ def project_occupancy(
         .assign(**{OccupancyLog.occupant: "vacant"})
     )
 
+    expired = (
+        facts
+        .query(f"{EventFact.event_type} == 'rent_expired'")[[EventFact.time, EventFact.house_id]]
+        .rename(columns={EventFact.house_id: OccupancyLog.house})
+        .assign(**{OccupancyLog.occupant: "vacant"})
+    )
+
+    demolished = (
+        facts
+        .query(f"{EventFact.event_type} == 'house_demolished'")[[EventFact.time, EventFact.house_id]]
+        .rename(columns={EventFact.house_id: OccupancyLog.house})
+        .assign(**{OccupancyLog.occupant: "demolished"})
+    )
+
     houses = initial_market.entities_of_type(House)
     agents = initial_market.entities_of_type(Agent)
     house_names: dict[str, str] = {h.id: h.name for h in houses}
@@ -38,12 +59,22 @@ def project_occupancy(
     initials = pd.DataFrame({
         EventFact.time: [0.0] * len(houses),
         OccupancyLog.house: [h.id for h in houses],
-        OccupancyLog.occupant: [h.occupant_id() or "vacant" for h in houses],
+        OccupancyLog.occupant: [_initial_occupant(h) for h in houses],
     })
+
+    completions = pd.DataFrame([
+        {
+            EventFact.time: float(h.state.remaining_time),
+            OccupancyLog.house: h.id,
+            OccupancyLog.occupant: "vacant",
+        }
+        for h in houses
+        if isinstance(h.state, ConstructionState)
+    ])
 
     stacked = (
         pd
-        .concat([initials, starts, evicts], ignore_index=True)
+        .concat([initials, completions, starts, evicts, expired, demolished], ignore_index=True)
         .sort_values(EventFact.time)
         .groupby([OccupancyLog.house, EventFact.time])[OccupancyLog.occupant]
         .last()

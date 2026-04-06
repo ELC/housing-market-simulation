@@ -18,26 +18,29 @@ if TYPE_CHECKING:
 class Agent(Entity):
     identity: ClassVar[EntityIdentity] = EntityIdentity(provider="first_name")
 
-    money: float = Field(default_factory=lambda: random.lognormvariate(math.log(10), 1))
-    income: float = Field(default_factory=lambda: random.lognormvariate(math.log(6), 0.3))
+    money: float = Field(default_factory=lambda: random.lognormvariate(math.log(3), 1))
+    income: float = Field(default_factory=lambda: random.lognormvariate(math.log(8), 0.3))
     spend_rate: float = Field(default_factory=lambda: random.uniform(0.1, 0.9))
     policy: AgentPolicy
 
-    rent_weight: float = 1.0
-    age_weight: float = 0.1
+    age_weight: float = Field(default_factory=lambda: random.uniform(0.05, 0.2))
+    horizon: float = Field(default_factory=lambda: random.uniform(10, 30))
+    max_vacancy_periods: float = Field(default_factory=lambda: random.uniform(50, 100))
 
     @property
     def depends_on(self) -> frozenset[Signal]:
         return self.policy.depends_on
 
+    @property
+    def expected_savings(self) -> float:
+        return self.income * (1 - self.spend_rate)
+
     def is_homeless(self, market: "HousingMarket") -> bool:
         return all(h.occupant_id() != self.id for h in market.entities_of_type(House))
 
     def willingness_to_pay(self, house: House) -> float:
-        return max(
-            0.0,
-            self.money - (self.rent_weight * house.rent_price + self.age_weight * house.age),
-        )
+        affordable_rent = self.expected_savings + self.money / self.horizon
+        return max(0.0, affordable_rent - self.age_weight * house.age)
 
     def decide(self, market: "HousingMarket", now: float) -> list["EventType"]:
         return self.policy.decide(self, market, now)

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Never
+from typing import TYPE_CHECKING, ClassVar, Never
 
 from core.entity.house import House, VacantState
 from core.events.base import ApplyResult, Event
@@ -13,8 +13,7 @@ class Evicted(Event):
     house_id: str
     tenant_id: str
 
-    def invalidates(self) -> set[Signal]:
-        return {Signal.HOMELESSNESS, Signal.MARKET_RENT}
+    invalidates: ClassVar[frozenset[Signal]] = frozenset({Signal.HOMELESSNESS, Signal.MARKET_RENT})
 
     def apply(self, market: "HousingMarket", context: "SimulationContext") -> ApplyResult[Never]:
         house = market.get(self.house_id, House)

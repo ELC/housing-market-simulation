@@ -25,4 +25,8 @@ class ConstructionState(HouseState):
     remaining_time: float
 
 
-HouseStateType = VacantState | RentedState | OwnerOccupiedState | ConstructionState
+class DemolishedState(HouseState):
+    pass
+
+
+HouseStateType = VacantState | RentedState | OwnerOccupiedState | ConstructionState | DemolishedState

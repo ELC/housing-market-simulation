@@ -11,8 +11,10 @@ from core.events import (
     Bid,
     EventType,
     Evicted,
+    HouseDemolished,
     RentCollected,
     RentDue,
+    RentExpired,
     RentStarted,
 )
 from core.market import HousingMarket
@@ -26,7 +28,7 @@ class EventRow(TypedDict):
     amount: float | None
 
 
-def event_to_row(event: EventType) -> EventRow | None:
+def event_to_row(event: EventType) -> EventRow | None:  # noqa: PLR0911
     match event:
         case AgentIncomeReceived(time=t, agent_id=aid, amount=amt):
             return EventRow(
@@ -76,7 +78,23 @@ def event_to_row(event: EventType) -> EventRow | None:
                 house_id=None,
                 amount=None,
             )
-        case RentDue():
+        case RentExpired(time=t, house_id=hid, tenant_id=tid):
+            return EventRow(
+                time=t,
+                event_type="rent_expired",
+                agent_id=tid,
+                house_id=hid,
+                amount=None,
+            )
+        case HouseDemolished(time=t, house_id=hid):
+            return EventRow(
+                time=t,
+                event_type="house_demolished",
+                agent_id=None,
+                house_id=hid,
+                amount=None,
+            )
+        case RentDue() | _:
             return None
 
 

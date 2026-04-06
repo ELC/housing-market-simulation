@@ -28,7 +28,7 @@ class SimulationEngine(FrozenModel):
             return self.model_copy(update={"queue": queue, "now": event.time})
 
         market, context, emitted = event.apply(self.market, self.context)
-        invalid = self.registry.propagate(event.invalidates())
+        invalid = self.registry.propagate(event.invalidates)
 
         new_events = list[EventType](emitted)
 

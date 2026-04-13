@@ -9,6 +9,8 @@ class RentDurationRolling(pa.DataFrameModel):
     duration: Series[float] = pa.Field(ge=0)
     rolling_mean: Series[float]
     rolling_std: Series[float]
+    rolling_ci_low: Series[float]
+    rolling_ci_high: Series[float]
 
     class Config:
         coerce = True

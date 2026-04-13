@@ -6,7 +6,6 @@ from viz.occupancy import plot_occupancy
 from viz.paid_vs_asked import plot_paid_vs_asked
 from viz.population import plot_migration_flows, plot_population
 from viz.rent_duration import plot_rent_duration
-from viz.renter_wealth import plot_renter_wealth
 from viz.time_to_rent import plot_time_to_rent
 from viz.vacancy import plot_vacancy
 from viz.wealth_quartiles import plot_wealth_quartiles, plot_wealth_spread
@@ -21,7 +20,6 @@ __all__ = [
     "plot_paid_vs_asked",
     "plot_population",
     "plot_rent_duration",
-    "plot_renter_wealth",
     "plot_time_to_rent",
     "plot_vacancy",
     "plot_wealth_quartiles",

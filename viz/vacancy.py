@@ -13,12 +13,29 @@ def plot_vacancy(
     figsize: tuple[float, float] = (14, 4),
 ) -> tuple[Figure, Axes]:
     with chart(figsize) as (fig, ax):
-        sns.lineplot(data=data, x=VacancyCount.time, y=VacancyCount.n_vacant, label="Vacant", ax=ax)
-        sns.lineplot(data=data, x=VacancyCount.time, y=VacancyCount.n_construction, label="Construction", color="#FFB347", ax=ax)
-        sns.lineplot(data=data, x=VacancyCount.time, y=VacancyCount.n_demolished, label="Demolished", color="#888888", ax=ax)
+        sns.lineplot(data=data, x=VacancyCount.time, y=VacancyCount.n_vacant, label="Vacant", ax=ax, lw=2)
+        sns.lineplot(
+            data=data,
+            x=VacancyCount.time,
+            y=VacancyCount.n_construction,
+            label="Construction",
+            color="#FFB347",
+            ax=ax,
+            lw=2,
+        )
+        sns.lineplot(
+            data=data,
+            x=VacancyCount.time,
+            y=VacancyCount.n_demolished,
+            label="Demolished",
+            color="#888888",
+            ax=ax,
+            lw=2,
+        )
         ax.set_title("House Status Over Time")
         ax.set_xlabel("Time")
         ax.set_ylabel("Houses")
         ax.set_ylim(bottom=0)
         ax.yaxis.set_major_locator(mticker.MaxNLocator(integer=True))
+        ax.legend()
     return fig, ax

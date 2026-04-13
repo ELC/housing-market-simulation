@@ -11,7 +11,7 @@ from core.entity.house import (
     VacantState,
 )
 from core.context import SimulationContext
-from core.engine import EventQueue, QueueItem, SimulationEngine
+from core.engine import EventQueue, QueueItem, RunResult, SimulationEngine
 from core.events import (
     AgentEntered,
     AgentIncomeReceived,
@@ -38,6 +38,8 @@ from core.entity.agent import (
 )
 from core.market import HousingMarket
 from core.registry import SignalRegistry
+from core.factory import EngineSetup, SimulationFactory, single_landlord_factory
+from core.runner import SimulationRunner
 from core.settings import SimulationSettings
 from core.signals import Signal
 
@@ -77,10 +79,15 @@ __all__ = [
     "RentExpired",
     "RentStarted",
     "RentedState",
+    "RunResult",
     "Signal",
+    "EngineSetup",
+    "SimulationFactory",
+    "single_landlord_factory",
     "SignalRegistry",
     "SimulationContext",
     "SimulationEngine",
+    "SimulationRunner",
     "SimulationSettings",
     "VacantState",
 ]

@@ -58,7 +58,26 @@ def bootstrap_mean_ci(
     return (stat, lo, hi)
 
 
-def bootstrap_mean_ci_by_group(
+def aggregate_across_runs(
+    df: DataFrame,
+    *,
+    run_col: str,
+    group_cols: list[str],
+    value_col: str,
+) -> DataFrame:
+    """Pre-aggregate per ``(run, group)`` before bootstrapping across runs.
+
+    Returns a dataframe with one row per ``(run, group)`` holding the
+    within-run mean of *value_col*.
+    """
+    return (
+        df.groupby([run_col, *group_cols], sort=True, observed=True)[value_col]
+        .mean()
+        .reset_index()
+    )
+
+
+def _bootstrap_groups(
     df: DataFrame,
     *,
     group_cols: list[str],
@@ -70,24 +89,8 @@ def bootstrap_mean_ci_by_group(
     seed: int = 0,
     max_resample_size: int = 500,
 ) -> DataFrame:  # noqa: PLR0913
-    """Return one row per group with statistic/CI columns.
-
-    By default, computes the mean and outputs a `mean` column.
-
-    Returns a dataframe with:
-    - `group_cols`
-    - `stat_col`
-    - `ci_low`, `ci_high`
-    - `n` (group size)
-    """
-    if not group_cols:
-        msg = "group_cols must be non-empty"
-        raise ValueError(msg)
-    if value_col not in df.columns:
-        raise KeyError(value_col)
-
+    """Core per-group bootstrap (no run-level awareness)."""
     rows: list[dict[str, object]] = []
-    # Stable sort keeps bootstrap reproducible across runs given a fixed seed.
     grouped = df.groupby(group_cols, sort=True, observed=True)[value_col]
     for group_key, series in grouped:
         key_tuple = group_key if isinstance(group_key, tuple) else (group_key,)
@@ -102,10 +105,66 @@ def bootstrap_mean_ci_by_group(
         row: dict[str, object] = dict(zip(group_cols, key_tuple, strict=True))
         row.update({stat_col: stat, "ci_low": lo, "ci_high": hi, "n": int(series.size)})
         rows.append(row)
-        # Change seed per group so different groups don't share identical RNG streams.
         seed += 1
 
     return pd.DataFrame(rows)
+
+
+def bootstrap_mean_ci_by_group(
+    df: DataFrame,
+    *,
+    group_cols: list[str],
+    value_col: str,
+    run_col: str | None = None,
+    stat_fn: Callable[[np.ndarray], float] = np.mean,
+    stat_col: str = "mean",
+    n_boot: int = 500,
+    ci: float = 95.0,
+    seed: int = 0,
+    max_resample_size: int = 500,
+) -> DataFrame:  # noqa: PLR0913
+    """Return one row per group with statistic/CI columns.
+
+    When *run_col* is given, the data is first aggregated per
+    ``(run, group)`` using :func:`aggregate_across_runs`, then the CI is
+    bootstrapped **across runs** for each group.
+
+    Returns a dataframe with ``group_cols``, ``stat_col``, ``ci_low``,
+    ``ci_high``, and ``n``.
+    """
+    if not group_cols:
+        msg = "group_cols must be non-empty"
+        raise ValueError(msg)
+    if value_col not in df.columns:
+        raise KeyError(value_col)
+
+    if run_col and run_col in df.columns:
+        per_run = aggregate_across_runs(
+            df, run_col=run_col, group_cols=group_cols, value_col=value_col,
+        )
+        return _bootstrap_groups(
+            per_run,
+            group_cols=group_cols,
+            value_col=value_col,
+            stat_fn=np.mean,
+            stat_col=stat_col,
+            n_boot=n_boot,
+            ci=ci,
+            seed=seed,
+            max_resample_size=max_resample_size,
+        )
+
+    return _bootstrap_groups(
+        df,
+        group_cols=group_cols,
+        value_col=value_col,
+        stat_fn=stat_fn,
+        stat_col=stat_col,
+        n_boot=n_boot,
+        ci=ci,
+        seed=seed,
+        max_resample_size=max_resample_size,
+    )
 
 
 def bootstrap_rolling_stat_ci(

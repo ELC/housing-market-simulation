@@ -1,5 +1,4 @@
 from analytics.gold.agent_population import AgentPopulation, build_agent_population
-from analytics.gold.house_rents import HouseRents, build_house_rents
 from analytics.gold.housed_renter_wealth import (
     HousedRenterWealth,
     build_housed_renter_wealth,
@@ -10,7 +9,6 @@ from analytics.gold.rent_duration_rolling import (
     RentDurationRolling,
     build_rent_duration_rolling,
 )
-from analytics.gold.rent_payments import RentPayments, build_rent_payments
 from analytics.gold.renter_wealth import RenterWealth, build_renter_wealth
 from analytics.gold.smooth_gold import SmootherTransformer
 from analytics.gold.smoother import LOWESSSmoother, Smoother
@@ -26,12 +24,10 @@ __all__ = [
     "AgentPopulation",
     "Gold",
     "GoldTransformer",
-    "HouseRents",
     "HousedRenterWealth",
     "LOWESSSmoother",
     "RentComparison",
     "RentDurationRolling",
-    "RentPayments",
     "RenterWealth",
     "Smoother",
     "SmootherTransformer",
@@ -39,11 +35,9 @@ __all__ = [
     "WealthQuartiles",
     "WealthSpread",
     "build_agent_population",
-    "build_house_rents",
     "build_housed_renter_wealth",
     "build_rent_comparison",
     "build_rent_duration_rolling",
-    "build_rent_payments",
     "build_renter_wealth",
     "build_time_to_rent_rolling",
     "build_wealth_quartiles",

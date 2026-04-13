@@ -23,7 +23,7 @@ class House(Entity):
 
     owner_id: str
     state: HouseStateType
-    rent_price: float = Field(default_factory=lambda: random.lognormvariate(math.log(15), 1))
+    rent_price: float = Field(default_factory=lambda: random.lognormvariate(math.log(15), 0.3))
     age: int = Field(default_factory=lambda: random.randint(1, 20))
 
     def occupant_id(self) -> str | None:

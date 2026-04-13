@@ -1,4 +1,3 @@
-from viz.avg_rent import plot_avg_rent
 from viz.base import chart
 from viz.housed_renter_wealth import plot_housed_renter_wealth
 from viz.paid_vs_asked import plot_paid_vs_asked
@@ -11,7 +10,6 @@ from viz.wealth_quartiles import plot_wealth_quartiles, plot_wealth_spread
 __all__ = [
     "DataVisualizer",
     "chart",
-    "plot_avg_rent",
     "plot_housed_renter_wealth",
     "plot_paid_vs_asked",
     "plot_population",

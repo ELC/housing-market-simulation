@@ -1,10 +1,8 @@
 from analytics.gold.agent_population import build_agent_population
-from analytics.gold.house_rents import build_house_rents
 from analytics.gold.housed_renter_wealth import build_housed_renter_wealth
 from analytics.gold.model import Gold
 from analytics.gold.rent_comparison import build_rent_comparison
 from analytics.gold.rent_duration_rolling import build_rent_duration_rolling
-from analytics.gold.rent_payments import build_rent_payments
 from analytics.gold.renter_wealth import build_renter_wealth
 from analytics.gold.time_to_rent_rolling import build_time_to_rent_rolling
 from analytics.gold.wealth_quartiles import build_wealth_quartiles
@@ -22,9 +20,7 @@ class GoldTransformer:
             housed_renter_wealth=build_housed_renter_wealth(
                 silver.wealth, silver.occupancy, owner_names=silver.owner_names,
             ),
-            rent_payments=build_rent_payments(silver.rent_payments),
             rent_comparison=build_rent_comparison(silver.rent_payments, silver.asking_rent),
-            house_rents=build_house_rents(silver.asking_rent),
             time_to_rent_rolling=build_time_to_rent_rolling(silver.time_to_rent),
             rent_duration_rolling=build_rent_duration_rolling(silver.rent_duration),
             wealth_quartiles=wealth_quartiles,

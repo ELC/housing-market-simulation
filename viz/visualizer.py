@@ -4,7 +4,6 @@ from matplotlib.figure import Figure
 
 from analytics.gold.model import Gold
 from core.settings import SimulationSettings
-from viz.avg_rent import plot_avg_rent
 from viz.housed_renter_wealth import plot_housed_renter_wealth
 from viz.paid_vs_asked import plot_paid_vs_asked
 from viz.population import plot_population
@@ -21,9 +20,6 @@ class DataVisualizer:
     def _show(self, fig: Figure, ax: Axes) -> tuple[Figure, Axes]:
         plt.show()
         return fig, ax
-
-    def plot_avg_rent(self, **kwargs: object) -> tuple[Figure, Axes]:
-        return self._show(*plot_avg_rent(self._gold.rent_payments, **kwargs))  # type: ignore[arg-type]
 
     def plot_housed_renter_wealth(self, **kwargs: object) -> tuple[Figure, Axes]:
         return self._show(*plot_housed_renter_wealth(self._gold.housed_renter_wealth, **kwargs))  # type: ignore[arg-type]

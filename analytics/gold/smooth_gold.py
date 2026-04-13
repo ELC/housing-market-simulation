@@ -43,8 +43,6 @@ class SmootherTransformer:
     def __call__(self, gold: Gold) -> Gold:
         gold = gold.model_copy()
 
-        _smooth_stats_table(gold, "house_rents", self._smoother, x_col="time")
-        _smooth_stats_table(gold, "rent_payments", self._smoother, x_col="time")
         _smooth_stats_table(gold, "housed_renter_wealth", self._smoother, x_col="time")
         _smooth_stats_table(gold, "wealth_spread", self._smoother, x_col="time")
         _smooth_stats_table(gold, "rent_comparison", self._smoother, x_col="time", group_cols=["kind"])

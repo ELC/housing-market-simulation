@@ -13,52 +13,39 @@ def plot_rent_duration(
     data: DataFrame[RentDurationRolling],
     settings: SimulationSettings | None = None,
     figsize: tuple[float, float] = (14, 4),
-    max_scatter_points: int = 8_000,
+    max_points: int = 2_000,
 ) -> tuple[Figure, Axes]:
-    df = data.sort_values(RentDurationRolling.time, kind="stable")
-    scatter_df = downsample_evenly(df, max_rows=max_scatter_points, sort_by=None)
+    stats = (
+        data[[RentDurationRolling.time, "mean", "ci_low", "ci_high"]]
+        .drop_duplicates()
+        .sort_values(RentDurationRolling.time, kind="stable")
+    )
+    stats = downsample_evenly(stats, max_rows=max_points, sort_by=RentDurationRolling.time)
 
     with chart(figsize) as (fig, ax):
-        ax.scatter(
-            scatter_df[RentDurationRolling.time],
-            scatter_df[RentDurationRolling.duration],
-            alpha=0.25,
-            s=25,
-            color="C0",
-            label="individual",
-            rasterized=True,
-        )
-        required = {"rolling_ci_low", "rolling_ci_high"}
-        if not required.issubset(set(df.columns)):
-            raise ValueError(
-                "Missing rolling bootstrap CI columns. Rebuild with analytics.gold.build_rent_duration_rolling() "
-                "to attach rolling_ci_low/rolling_ci_high."
-            )
-
         sns.lineplot(
-            data=df,
+            data=stats,
             x=RentDurationRolling.time,
-            y=RentDurationRolling.rolling_mean,
-            color="C1",
+            y="mean",
+            color="C0",
             lw=2,
             errorbar=None,
-            sort=False,
             ax=ax,
-            label="rolling mean",
+            label="mean",
         )
         ax.fill_between(
-            df[RentDurationRolling.time].to_numpy(),
-            df["rolling_ci_low"].to_numpy(),
-            df["rolling_ci_high"].to_numpy(),
-            color="C1",
-            alpha=0.15,
+            stats[RentDurationRolling.time].to_numpy(),
+            stats["ci_low"].to_numpy(),
+            stats["ci_high"].to_numpy(),
+            color="C0",
+            alpha=0.2,
             linewidth=0,
-            label="95% CI (bootstrap, rolling)",
+            label="95% CI (bootstrap)",
         )
         if settings is not None:
             ax.axhline(settings.min_lease_duration, ls="--", color="C2", lw=1, label="min lease")
             ax.axhline(settings.max_lease_duration, ls="--", color="C3", lw=1, label="max lease")
-        ax.set_title("Rent Duration (Time Until Vacancy)")
+        ax.set_title("Rent Duration (95% CI)")
         ax.set_xlabel("Time")
         ax.set_ylabel("Duration (periods)")
         ax.legend()

@@ -22,7 +22,7 @@ class SimulationSettings(BaseSettings, frozen=True):
     reconstruction_delay: int = 5
     migration_interval: float = 10
 
-    n_runs: int = 5
+    n_runs: int = 20
     n_steps: int = 1_000_000
     max_t: float = 500
     n_houses: int = 5

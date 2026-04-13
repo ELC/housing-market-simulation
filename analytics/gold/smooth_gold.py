@@ -36,30 +36,6 @@ def _smooth_stats_table(
     setattr(gold, field, df)
 
 
-def _smooth_rolling_table(
-    gold: Gold,
-    field: str,
-    smoother: Smoother,
-    *,
-    x_col: str,
-) -> None:
-    df = getattr(gold, field).copy()
-    cols = ["rolling_mean", "rolling_ci_low", "rolling_ci_high"]
-
-    for col in cols:
-        df = smoother.smooth(df, x_col=x_col, y_col=col)
-
-    lo = df["rolling_ci_low"].to_numpy(dtype=float)
-    hi = df["rolling_ci_high"].to_numpy(dtype=float)
-    stat = df["rolling_mean"].to_numpy(dtype=float)
-    lo2 = np.minimum(lo, hi)
-    hi2 = np.maximum(lo, hi)
-    df["rolling_ci_low"] = np.minimum(lo2, stat)
-    df["rolling_ci_high"] = np.maximum(hi2, stat)
-
-    setattr(gold, field, df)
-
-
 class SmootherTransformer:
     def __init__(self, smoother: Smoother) -> None:
         self._smoother = smoother
@@ -74,8 +50,8 @@ class SmootherTransformer:
         _smooth_stats_table(gold, "rent_comparison", self._smoother, x_col="time", group_cols=["kind"])
         _smooth_stats_table(gold, "wealth_quartiles", self._smoother, x_col="time", group_cols=["quartile"])
 
-        _smooth_rolling_table(gold, "time_to_rent_rolling", self._smoother, x_col="time")
-        _smooth_rolling_table(gold, "rent_duration_rolling", self._smoother, x_col="time")
+        _smooth_stats_table(gold, "time_to_rent_rolling", self._smoother, x_col="time")
+        _smooth_stats_table(gold, "rent_duration_rolling", self._smoother, x_col="time")
 
         _smooth_stats_table(gold, "agent_population", self._smoother, x_col="time")
 

@@ -129,3 +129,7 @@ dmypy.json
 .pyre/
 
 _build/
+
+# Feather persistence cache
+**/feather/
+*.feather

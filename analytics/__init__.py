@@ -14,6 +14,12 @@ from analytics.gold import (
     build_renter_wealth,
     build_time_to_rent_rolling,
 )
+from analytics.persistence import (
+    FeatherEngine,
+    FrictionlessEngine,
+    PersistenceEngine,
+    PersistenceManager,
+)
 from analytics.pipeline import AnalyticsPipeline, Step
 from analytics.silver import (
     HouseRentLog,
@@ -34,12 +40,16 @@ __all__ = [
     "AnalyticsPipeline",
     "EventFact",
     "EventRow",
+    "FeatherEngine",
+    "FrictionlessEngine",
     "Gold",
     "GoldTransformer",
     "HouseRentLog",
     "HousedRenterWealth",
     "LOWESSSmoother",
     "OccupancyLog",
+    "PersistenceEngine",
+    "PersistenceManager",
     "RentComparison",
     "RentLog",
     "RenterWealth",

@@ -2,7 +2,6 @@ from collections.abc import Callable, MutableMapping
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, PrivateAttr
-from tqdm.auto import tqdm
 
 StepFn = Callable[..., Any]
 Step = tuple[str, StepFn]
@@ -14,9 +13,9 @@ class AnalyticsPipeline(BaseModel):
     steps: list[Step]
     _results: MutableMapping[str, Any] = PrivateAttr(default_factory=dict)
 
-    def run(self, data: Any, *, verbose: bool = True) -> Any:
+    def run(self, data: Any) -> Any:
         self._results = {}
-        for name, step in tqdm(self.steps, desc="Pipeline", disable=not verbose):
+        for name, step in self.steps:
             data = step(data)
             self._results[name] = data
         return data

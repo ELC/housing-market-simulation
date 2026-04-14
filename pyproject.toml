@@ -6,10 +6,12 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "faker>=37.3.0",
+    "frictionless[pandas]>=5.18.0",
     "jupyter-book<2",
     "matplotlib>=3.10.8",
     "pandas>=3.0.1",
     "pandera>=0.30.1",
+    "pyarrow>=19.0.0",
     "pydantic-settings>=2.13.1",
     "seaborn>=0.13.2",
     "statsmodels>=0.14.6",

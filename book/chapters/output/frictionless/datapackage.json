@@ -1,0 +1,312 @@
+{
+  "resources": [
+    {
+      "name": "renter_wealth",
+      "type": "table",
+      "path": "renter_wealth.csv",
+      "scheme": "file",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "time",
+            "type": "number"
+          },
+          {
+            "name": "agent",
+            "type": "string"
+          },
+          {
+            "name": "money",
+            "type": "number"
+          },
+          {
+            "name": "run_id",
+            "type": "integer"
+          }
+        ]
+      }
+    },
+    {
+      "name": "housed_renter_wealth",
+      "type": "table",
+      "path": "housed_renter_wealth.csv",
+      "scheme": "file",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "time",
+            "type": "number"
+          },
+          {
+            "name": "agent",
+            "type": "string"
+          },
+          {
+            "name": "money",
+            "type": "number"
+          },
+          {
+            "name": "mean",
+            "type": "number"
+          },
+          {
+            "name": "ci_low",
+            "type": "number"
+          },
+          {
+            "name": "ci_high",
+            "type": "number"
+          },
+          {
+            "name": "n",
+            "type": "integer"
+          }
+        ]
+      }
+    },
+    {
+      "name": "rent_comparison",
+      "type": "table",
+      "path": "rent_comparison.csv",
+      "scheme": "file",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "time",
+            "type": "number"
+          },
+          {
+            "name": "amount",
+            "type": "number"
+          },
+          {
+            "name": "kind",
+            "type": "string"
+          },
+          {
+            "name": "mean",
+            "type": "number"
+          },
+          {
+            "name": "ci_low",
+            "type": "number"
+          },
+          {
+            "name": "ci_high",
+            "type": "number"
+          },
+          {
+            "name": "n",
+            "type": "integer"
+          }
+        ]
+      }
+    },
+    {
+      "name": "time_to_rent_rolling",
+      "type": "table",
+      "path": "time_to_rent_rolling.csv",
+      "scheme": "file",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "time",
+            "type": "number"
+          },
+          {
+            "name": "house",
+            "type": "string"
+          },
+          {
+            "name": "duration",
+            "type": "number"
+          },
+          {
+            "name": "mean",
+            "type": "number"
+          },
+          {
+            "name": "ci_low",
+            "type": "number"
+          },
+          {
+            "name": "ci_high",
+            "type": "number"
+          }
+        ]
+      }
+    },
+    {
+      "name": "rent_duration_rolling",
+      "type": "table",
+      "path": "rent_duration_rolling.csv",
+      "scheme": "file",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "time",
+            "type": "number"
+          },
+          {
+            "name": "house",
+            "type": "string"
+          },
+          {
+            "name": "tenant",
+            "type": "string"
+          },
+          {
+            "name": "duration",
+            "type": "number"
+          },
+          {
+            "name": "mean",
+            "type": "number"
+          },
+          {
+            "name": "ci_low",
+            "type": "number"
+          },
+          {
+            "name": "ci_high",
+            "type": "number"
+          }
+        ]
+      }
+    },
+    {
+      "name": "wealth_quartiles",
+      "type": "table",
+      "path": "wealth_quartiles.csv",
+      "scheme": "file",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "time",
+            "type": "number"
+          },
+          {
+            "name": "agent",
+            "type": "string"
+          },
+          {
+            "name": "money",
+            "type": "number"
+          },
+          {
+            "name": "run_id",
+            "type": "integer"
+          },
+          {
+            "name": "quartile",
+            "type": "string"
+          },
+          {
+            "name": "mean",
+            "type": "number"
+          },
+          {
+            "name": "ci_low",
+            "type": "number"
+          },
+          {
+            "name": "ci_high",
+            "type": "number"
+          },
+          {
+            "name": "n",
+            "type": "integer"
+          }
+        ]
+      }
+    },
+    {
+      "name": "wealth_spread",
+      "type": "table",
+      "path": "wealth_spread.csv",
+      "scheme": "file",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "time",
+            "type": "number"
+          },
+          {
+            "name": "spread",
+            "type": "number"
+          },
+          {
+            "name": "mean",
+            "type": "number"
+          },
+          {
+            "name": "ci_low",
+            "type": "number"
+          },
+          {
+            "name": "ci_high",
+            "type": "number"
+          },
+          {
+            "name": "n",
+            "type": "integer"
+          }
+        ]
+      }
+    },
+    {
+      "name": "agent_population",
+      "type": "table",
+      "path": "agent_population.csv",
+      "scheme": "file",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "time",
+            "type": "number"
+          },
+          {
+            "name": "count",
+            "type": "number"
+          },
+          {
+            "name": "entered",
+            "type": "number"
+          },
+          {
+            "name": "left",
+            "type": "number"
+          },
+          {
+            "name": "mean",
+            "type": "number"
+          },
+          {
+            "name": "ci_low",
+            "type": "number"
+          },
+          {
+            "name": "ci_high",
+            "type": "number"
+          }
+        ]
+      }
+    }
+  ]
+}

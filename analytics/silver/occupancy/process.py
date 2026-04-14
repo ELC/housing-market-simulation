@@ -6,6 +6,7 @@ from analytics.silver.occupancy.schema import OccupancyLog
 from core.entity.agent import Agent
 from core.entity.house import House
 from core.entity.house.state import ConstructionState
+from core.events import Evicted, HouseDemolished, HouseRebuilt, RentExpired, RentStarted
 from core.market import HousingMarket
 
 
@@ -22,7 +23,7 @@ def project_occupancy(
 ) -> DataFrame[OccupancyLog]:
     event_times: list[float] = sorted(facts[EventFact.time].unique())
 
-    starts = facts.query(f"{EventFact.event_type} == 'rent_started'")[
+    starts = facts.query(f"{EventFact.event_type} == '{RentStarted.event_name()}'")[
         [EventFact.time, EventFact.house_id, EventFact.agent_id]
     ].rename(
         columns={
@@ -33,26 +34,26 @@ def project_occupancy(
 
     evicts = (
         facts
-        .query(f"{EventFact.event_type} == 'evicted'")[[EventFact.time, EventFact.house_id]]
+        .query(f"{EventFact.event_type} == '{Evicted.event_name()}'")[[EventFact.time, EventFact.house_id]]
         .rename(columns={EventFact.house_id: OccupancyLog.house})
         .assign(**{OccupancyLog.occupant: "vacant"})
     )
 
     expired = (
         facts
-        .query(f"{EventFact.event_type} == 'rent_expired'")[[EventFact.time, EventFact.house_id]]
+        .query(f"{EventFact.event_type} == '{RentExpired.event_name()}'")[[EventFact.time, EventFact.house_id]]
         .rename(columns={EventFact.house_id: OccupancyLog.house})
         .assign(**{OccupancyLog.occupant: "vacant"})
     )
 
     demolished = (
         facts
-        .query(f"{EventFact.event_type} == 'house_demolished'")[[EventFact.time, EventFact.house_id]]
+        .query(f"{EventFact.event_type} == '{HouseDemolished.event_name()}'")[[EventFact.time, EventFact.house_id]]
         .rename(columns={EventFact.house_id: OccupancyLog.house})
         .assign(**{OccupancyLog.occupant: "demolished"})
     )
 
-    rebuilt_raw = facts.query(f"{EventFact.event_type} == 'house_rebuilt'")
+    rebuilt_raw = facts.query(f"{EventFact.event_type} == '{HouseRebuilt.event_name()}'")
     rebuilt = (
         rebuilt_raw[[EventFact.time, EventFact.house_id]]
         .rename(columns={EventFact.house_id: OccupancyLog.house})

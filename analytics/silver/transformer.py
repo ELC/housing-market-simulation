@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pandas as pd
+from tqdm.auto import tqdm
 
 from analytics.bronze import build_fact_table
 from analytics.silver.asking_rent import project_asking_rent
@@ -62,7 +63,7 @@ class SilverTransformer:
         landlord_names: set[str] = set()
         res = self._time_resolution
 
-        for run_id, result in enumerate(runs):
+        for run_id, result in tqdm(enumerate(runs), desc="Silver", total=len(runs), leave=False):
             facts = build_fact_table(result.event_log, result.market)
             agent_names = _extract_agent_names(result)
 

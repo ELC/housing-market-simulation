@@ -2,6 +2,7 @@ from pandera.typing import DataFrame
 
 from analytics.bronze.event_facts.schema import EventFact
 from analytics.silver.rent_payments.schema import RentLog
+from core.events import RentCollected
 
 
 def project_rent_payments(
@@ -9,7 +10,7 @@ def project_rent_payments(
 ) -> DataFrame[RentLog]:
     return (
         facts
-        .query(f"{EventFact.event_type} == 'rent_collected'")[
+        .query(f"{EventFact.event_type} == '{RentCollected.event_name()}'")[
             [EventFact.time, EventFact.house_id, EventFact.agent_id, EventFact.amount]
         ]
         .rename(

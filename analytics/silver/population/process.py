@@ -4,6 +4,7 @@ from pandera.typing import DataFrame
 from analytics.bronze.event_facts.schema import EventFact
 from analytics.silver.population.schema import PopulationLog
 from core.entity import Agent
+from core.events import AgentEntered, AgentLeft
 from core.market import HousingMarket
 
 
@@ -16,13 +17,13 @@ def project_population(
 
     entries = (
         facts
-        .query(f"{EventFact.event_type} == 'agent_entered'")
+        .query(f"{EventFact.event_type} == '{AgentEntered.event_name()}'")
         .groupby(EventFact.time)
         .size()
     )
     exits = (
         facts
-        .query(f"{EventFact.event_type} == 'agent_left'")
+        .query(f"{EventFact.event_type} == '{AgentLeft.event_name()}'")
         .groupby(EventFact.time)
         .size()
     )

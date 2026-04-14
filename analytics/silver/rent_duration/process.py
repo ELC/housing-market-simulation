@@ -5,6 +5,7 @@ from analytics.bronze.event_facts.schema import EventFact
 from analytics.silver.rent_duration.schema import RentDuration
 from core.entity.agent import Agent
 from core.entity.house import House
+from core.events import Evicted, RentExpired, RentStarted
 from core.market import HousingMarket
 
 
@@ -20,7 +21,7 @@ def project_rent_duration(
 
     rent_starts = (
         facts
-        .query(f"{EventFact.event_type} == 'rent_started'")[[EventFact.time, EventFact.house_id]]
+        .query(f"{EventFact.event_type} == '{RentStarted.event_name()}'")[[EventFact.time, EventFact.house_id]]
         .rename(columns={EventFact.time: "start"})
         .sort_values("start")
         .assign(rank=lambda df: df.groupby(EventFact.house_id).cumcount())
@@ -29,8 +30,8 @@ def project_rent_duration(
     rent_ends = (
         pd.concat(
             [
-                facts.query(f"{EventFact.event_type} == 'evicted'")[[EventFact.time, EventFact.house_id, EventFact.agent_id]],
-                facts.query(f"{EventFact.event_type} == 'rent_expired'")[[EventFact.time, EventFact.house_id, EventFact.agent_id]],
+                facts.query(f"{EventFact.event_type} == '{Evicted.event_name()}'")[[EventFact.time, EventFact.house_id, EventFact.agent_id]],
+                facts.query(f"{EventFact.event_type} == '{RentExpired.event_name()}'")[[EventFact.time, EventFact.house_id, EventFact.agent_id]],
             ],
             ignore_index=True,
         )

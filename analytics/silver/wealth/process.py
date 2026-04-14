@@ -5,6 +5,7 @@ from analytics.bronze.event_facts.schema import EventFact
 from analytics.silver.wealth.schema import WealthLog
 from core.entity.agent import Agent
 from core.entity.house import House
+from core.events import AgentIncomeReceived, AgentLeft, RentCollected, WealthTaxDeducted
 from core.market import HousingMarket
 
 
@@ -19,11 +20,11 @@ def project_wealth(
     house_owners: dict[str, str] = {h.id: h.owner_id for h in initial_market.entities_of_type(House)}
     event_times: list[float] = sorted(facts[EventFact.time].unique())
 
-    inc = facts.query(f"{EventFact.event_type} == 'income'")[
+    inc = facts.query(f"{EventFact.event_type} == '{AgentIncomeReceived.event_name()}'")[
         [EventFact.time, EventFact.agent_id, EventFact.amount]
     ].rename(columns={EventFact.agent_id: WealthLog.agent, EventFact.amount: "delta"})
 
-    rent = facts.query(f"{EventFact.event_type} == 'rent_collected'")
+    rent = facts.query(f"{EventFact.event_type} == '{RentCollected.event_name()}'")
 
     debits = (
         rent[[EventFact.time, EventFact.agent_id, EventFact.amount]]
@@ -38,6 +39,14 @@ def project_wealth(
         .rename(columns={EventFact.amount: "delta"})
     )
 
+    tax = (
+        facts.query(f"{EventFact.event_type} == '{WealthTaxDeducted.event_name()}'")[
+            [EventFact.time, EventFact.agent_id, EventFact.amount]
+        ]
+        .rename(columns={EventFact.agent_id: WealthLog.agent, EventFact.amount: "delta"})
+        .assign(delta=lambda df: -df["delta"])
+    )
+
     agents = initial_market.entities_of_type(Agent)
     initials = pd.DataFrame({
         EventFact.time: [0.0] * len(agents),
@@ -47,7 +56,7 @@ def project_wealth(
 
     pivot = (
         pd
-        .concat([initials, inc, debits, credits], ignore_index=True)
+        .concat([initials, inc, debits, credits, tax], ignore_index=True)
         .sort_values(EventFact.time, kind="mergesort")
         .assign(**{WealthLog.money: lambda df: df.groupby(WealthLog.agent)["delta"].cumsum()})
         .groupby([WealthLog.agent, EventFact.time])[WealthLog.money]
@@ -58,7 +67,7 @@ def project_wealth(
     )
 
     departures = (
-        facts.query(f"{EventFact.event_type} == 'agent_left'")
+        facts.query(f"{EventFact.event_type} == '{AgentLeft.event_name()}'")
         .set_index(EventFact.agent_id)[EventFact.time]
     )
     for aid, dep_time in departures.items():

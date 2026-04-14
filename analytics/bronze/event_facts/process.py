@@ -13,12 +13,15 @@ from core.events import (
     Bid,
     EventType,
     Evicted,
+    HouseAged,
     HouseDemolished,
     HouseRebuilt,
+    ReconstructionCheck,
     RentCollected,
     RentDue,
     RentExpired,
     RentStarted,
+    WealthTaxDeducted,
 )
 from core.market import HousingMarket
 
@@ -36,7 +39,7 @@ def event_to_row(event: EventType) -> EventRow | None:  # noqa: PLR0911
         case AgentIncomeReceived(time=t, agent_id=aid, amount=amt):
             return EventRow(
                 time=t,
-                event_type="income",
+                event_type=event.event_name(),
                 agent_id=aid,
                 house_id=None,
                 amount=amt,
@@ -44,7 +47,7 @@ def event_to_row(event: EventType) -> EventRow | None:  # noqa: PLR0911
         case RentStarted(time=t, house_id=hid, tenant_id=tid):
             return EventRow(
                 time=t,
-                event_type="rent_started",
+                event_type=event.event_name(),
                 agent_id=tid,
                 house_id=hid,
                 amount=None,
@@ -52,7 +55,7 @@ def event_to_row(event: EventType) -> EventRow | None:  # noqa: PLR0911
         case RentCollected(time=t, house_id=hid, tenant_id=tid, amount=amt):
             return EventRow(
                 time=t,
-                event_type="rent_collected",
+                event_type=event.event_name(),
                 agent_id=tid,
                 house_id=hid,
                 amount=amt,
@@ -60,7 +63,7 @@ def event_to_row(event: EventType) -> EventRow | None:  # noqa: PLR0911
         case Evicted(time=t, house_id=hid, tenant_id=tid):
             return EventRow(
                 time=t,
-                event_type="evicted",
+                event_type=event.event_name(),
                 agent_id=tid,
                 house_id=hid,
                 amount=None,
@@ -68,7 +71,7 @@ def event_to_row(event: EventType) -> EventRow | None:  # noqa: PLR0911
         case Bid(time=t, agent_id=aid, house_id=hid, price=p):
             return EventRow(
                 time=t,
-                event_type="bid",
+                event_type=event.event_name(),
                 agent_id=aid,
                 house_id=hid,
                 amount=p,
@@ -76,7 +79,7 @@ def event_to_row(event: EventType) -> EventRow | None:  # noqa: PLR0911
         case AuctionClear(time=t):
             return EventRow(
                 time=t,
-                event_type="auction_clear",
+                event_type=event.event_name(),
                 agent_id=None,
                 house_id=None,
                 amount=None,
@@ -84,7 +87,7 @@ def event_to_row(event: EventType) -> EventRow | None:  # noqa: PLR0911
         case RentExpired(time=t, house_id=hid, tenant_id=tid):
             return EventRow(
                 time=t,
-                event_type="rent_expired",
+                event_type=event.event_name(),
                 agent_id=tid,
                 house_id=hid,
                 amount=None,
@@ -92,7 +95,7 @@ def event_to_row(event: EventType) -> EventRow | None:  # noqa: PLR0911
         case HouseDemolished(time=t, house_id=hid):
             return EventRow(
                 time=t,
-                event_type="house_demolished",
+                event_type=event.event_name(),
                 agent_id=None,
                 house_id=hid,
                 amount=None,
@@ -100,15 +103,31 @@ def event_to_row(event: EventType) -> EventRow | None:  # noqa: PLR0911
         case HouseRebuilt(time=t, house_id=hid, construction_time=ct):
             return EventRow(
                 time=t,
-                event_type="house_rebuilt",
+                event_type=event.event_name(),
                 agent_id=None,
                 house_id=hid,
                 amount=float(ct),
             )
+        case HouseAged(time=t, house_id=hid):
+            return EventRow(
+                time=t,
+                event_type=event.event_name(),
+                agent_id=None,
+                house_id=hid,
+                amount=None,
+            )
+        case ReconstructionCheck(time=t, house_id=hid, cost=c):
+            return EventRow(
+                time=t,
+                event_type=event.event_name(),
+                agent_id=None,
+                house_id=hid,
+                amount=c,
+            )
         case AgentEntered(time=t, agent_id=aid):
             return EventRow(
                 time=t,
-                event_type="agent_entered",
+                event_type=event.event_name(),
                 agent_id=aid,
                 house_id=None,
                 amount=None,
@@ -116,12 +135,20 @@ def event_to_row(event: EventType) -> EventRow | None:  # noqa: PLR0911
         case AgentLeft(time=t, agent_id=aid):
             return EventRow(
                 time=t,
-                event_type="agent_left",
+                event_type=event.event_name(),
                 agent_id=aid,
                 house_id=None,
                 amount=None,
             )
-        case RentDue() | _:
+        case WealthTaxDeducted(time=t, agent_id=aid, amount=amt):
+            return EventRow(
+                time=t,
+                event_type=event.event_name(),
+                agent_id=aid,
+                house_id=None,
+                amount=amt,
+            )
+        case RentDue():
             return None
 
 

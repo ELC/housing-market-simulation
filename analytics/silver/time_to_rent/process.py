@@ -4,6 +4,7 @@ from pandera.typing import DataFrame
 from analytics.bronze.event_facts.schema import EventFact
 from analytics.silver.time_to_rent.schema import TimeToRent
 from core.entity.house import House
+from core.events import Evicted, RentExpired, RentStarted
 from core.market import HousingMarket
 
 
@@ -20,8 +21,8 @@ def project_time_to_rent(
 
     vacated = pd.concat(
         [
-            facts.query(f"{EventFact.event_type} == 'evicted'")[[EventFact.time, EventFact.house_id]],
-            facts.query(f"{EventFact.event_type} == 'rent_expired'")[[EventFact.time, EventFact.house_id]],
+            facts.query(f"{EventFact.event_type} == '{Evicted.event_name()}'")[[EventFact.time, EventFact.house_id]],
+            facts.query(f"{EventFact.event_type} == '{RentExpired.event_name()}'")[[EventFact.time, EventFact.house_id]],
         ],
         ignore_index=True,
     )
@@ -41,7 +42,7 @@ def project_time_to_rent(
 
     vacancy_ends = (
         facts
-        .query(f"{EventFact.event_type} == 'rent_started'")[[EventFact.time, EventFact.house_id]]
+        .query(f"{EventFact.event_type} == '{RentStarted.event_name()}'")[[EventFact.time, EventFact.house_id]]
         .rename(columns={EventFact.time: "end"})
         .sort_values("end")
         .assign(rank=lambda df: df.groupby(EventFact.house_id).cumcount())

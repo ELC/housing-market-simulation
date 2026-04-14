@@ -9,6 +9,7 @@ from core.events import (
     AgentIncomeReceived,
     AuctionClear,
     HouseAged,
+    WealthTaxDeducted,
 )
 from core.factory.base import EngineSetup
 from core.market import HousingMarket
@@ -45,6 +46,7 @@ def single_landlord_factory(settings: SimulationSettings) -> EngineSetup:
             amount=AgentIncomeReceived.compute_salary(landlord),
         ),
     )
+    queue = queue.push(WealthTaxDeducted(time=1, agent_id=landlord.id))
     for house in market.entities_of_type(House):
         queue = queue.push(HouseAged(time=settings.aging_interval, house_id=house.id))
     queue = queue.push(AuctionClear(time=1))

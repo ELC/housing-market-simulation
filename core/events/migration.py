@@ -7,6 +7,7 @@ from core.entity.agent import Agent
 from core.entity.agent.protocol import AgentPolicy
 from core.events.base import ApplyResult, Event
 from core.events.income import AgentIncomeReceived
+from core.events.tax import WealthTaxDeducted
 from core.signals import Signal
 
 if TYPE_CHECKING:
@@ -23,7 +24,7 @@ class AgentEntered(Event):
 
     def apply(
         self, market: HousingMarket, context: SimulationContext
-    ) -> ApplyResult[AgentIncomeReceived | AgentLeft | AgentEntered]:
+    ) -> ApplyResult[AgentIncomeReceived | WealthTaxDeducted | AgentLeft | AgentEntered]:
         agent = Agent(
             id=self.agent_id,
             name=self.agent_name,
@@ -37,6 +38,7 @@ class AgentEntered(Event):
             agent_id=agent.id,
             amount=AgentIncomeReceived.compute_salary(agent),
         )
+        tax = WealthTaxDeducted(time=self.time + 1, agent_id=agent.id)
         left = AgentLeft(
             time=self.time + agent.max_homeless_periods,
             agent_id=agent.id,
@@ -51,7 +53,7 @@ class AgentEntered(Event):
             policy=self.policy,
         )
 
-        return new_market, context, [income, left, next_entry]
+        return new_market, context, [income, tax, left, next_entry]
 
 
 class AgentLeft(Event):

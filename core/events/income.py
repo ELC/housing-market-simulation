@@ -9,7 +9,6 @@ if TYPE_CHECKING:
     from core.market import HousingMarket
 
 
-
 _INCOME_NOISE = Stochastic(sigma=0.1)
 _SPEND_RATE_NOISE = Stochastic(sigma=0.05, high=1.0)
 

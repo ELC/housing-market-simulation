@@ -22,6 +22,8 @@ class RentStarted(Event):
     invalidates: ClassVar[frozenset[Signal]] = frozenset({Signal.HOMELESSNESS})
 
     def is_valid(self, market: HousingMarket) -> bool:
+        if not market.has_entity(self.house_id, House):
+            return False
         house = market.get(self.house_id, House)
         return isinstance(house.state, VacantState)
 
@@ -56,6 +58,8 @@ class RentExpired(Event):
     invalidates: ClassVar[frozenset[Signal]] = frozenset({Signal.HOMELESSNESS, Signal.MARKET_RENT})
 
     def is_valid(self, market: HousingMarket) -> bool:
+        if not market.has_entity(self.house_id, House):
+            return False
         house = market.get(self.house_id, House)
         return house.occupant_id() == self.tenant_id
 
@@ -78,6 +82,16 @@ class RentCollected(Event):
     house_id: str
     tenant_id: str
     amount: float
+
+    def is_valid(self, market: HousingMarket) -> bool:
+        if not market.has_entity(self.house_id, House):
+            return False
+
+        house = market.get(self.house_id, House)
+        if not market.has_entity(house.owner_id, Agent):
+            return False
+
+        return market.has_entity(self.tenant_id, Agent)
 
     def apply(self, market: HousingMarket, context: SimulationContext) -> ApplyResult[RentDue]:
         house = market.get(self.house_id, House)
@@ -104,6 +118,8 @@ class RentDue(Event):
     amount: float
 
     def is_valid(self, market: HousingMarket) -> bool:
+        if not market.has_entity(self.house_id, House):
+            return False
         house = market.get(self.house_id, House)
         return house.occupant_id() == self.tenant_id
 

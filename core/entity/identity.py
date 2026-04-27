@@ -17,10 +17,13 @@ class EntityIdentity(BaseModel, Iterator[IdentityRecord]):
     provider: str
     seed: int = 42
     _fake: Faker = PrivateAttr(default_factory=Faker)
+    _counter: int = PrivateAttr(default=0)
 
     def model_post_init(self, _context: object) -> None:
         self._fake.seed_instance(self.seed)
 
     def __next__(self) -> IdentityRecord:
         name: str = getattr(self._fake, self.provider)()
-        return IdentityRecord(str(uuid.uuid5(ENTITY_NAMESPACE, name)), name)
+        self._counter += 1
+        entity_id = str(uuid.uuid5(ENTITY_NAMESPACE, f"{name}#{self._counter}"))
+        return IdentityRecord(entity_id, name)

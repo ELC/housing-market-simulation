@@ -3,21 +3,33 @@ from pandera.typing import DataFrame
 
 from analytics.bronze.event_facts.schema import EventFact
 from analytics.silver.wealth.schema import WealthLog
-from core.entity.agent import Agent
-from core.entity.house import House
-from core.events import AgentIncomeReceived, AgentLeft, RentCollected, WealthTaxDeducted
-from core.market import HousingMarket
+from core.events import (
+    AgentEntered,
+    AgentIncomeReceived,
+    AgentLeft,
+    HouseBuilt,
+    LandlordEntered,
+    LandlordLeft,
+    RentCollected,
+    WealthTaxDeducted,
+)
 
 
 def project_wealth(
     facts: DataFrame[EventFact],
-    initial_market: HousingMarket,
     agent_names: dict[str, str] | None = None,
 ) -> DataFrame[WealthLog]:
-    agents = initial_market.entities_of_type(Agent)
     if agent_names is None:
-        agent_names = {a.id: a.name for a in agents}
-    house_owners: dict[str, str] = {h.id: h.owner_id for h in initial_market.entities_of_type(House)}
+        agent_names = {}
+
+    house_owners: dict[str, str] = {}
+    built = facts.query(f"{EventFact.event_type} == '{HouseBuilt.event_name()}'")
+    for _, row in built.iterrows():
+        hid = row[EventFact.house_id]
+        aid = row[EventFact.agent_id]
+        if hid and aid:
+            house_owners[hid] = aid
+
     event_times: list[float] = sorted(facts[EventFact.time].unique())
 
     inc = facts.query(f"{EventFact.event_type} == '{AgentIncomeReceived.event_name()}'")[
@@ -47,16 +59,28 @@ def project_wealth(
         .assign(delta=lambda df: -df["delta"])
     )
 
-    agents = initial_market.entities_of_type(Agent)
-    initials = pd.DataFrame({
-        EventFact.time: [0.0] * len(agents),
-        WealthLog.agent: [a.id for a in agents],
-        "delta": [a.money for a in agents],
-    })
+    # Agents enter via ``AgentEntered`` / ``LandlordEntered`` events that
+    # carry the seed endowment as ``amount``. Treating these as t=entry
+    # credits is what makes wealth fully derivable from the event log.
+    entry_event_types = {AgentEntered.event_name(), LandlordEntered.event_name()}
+    entries = (
+        facts[facts[EventFact.event_type].isin(entry_event_types)][
+            [EventFact.time, EventFact.agent_id, EventFact.amount]
+        ]
+        .rename(columns={EventFact.agent_id: WealthLog.agent, EventFact.amount: "delta"})
+        .fillna({"delta": 0.0})
+    )
+
+    all_frames = [entries, inc, debits, credits, tax]
+    combined = pd.concat(all_frames, ignore_index=True)
+
+    if combined.empty:
+        return WealthLog.validate(
+            pd.DataFrame(columns=[WealthLog.time, WealthLog.agent, WealthLog.money])
+        )
 
     pivot = (
-        pd
-        .concat([initials, inc, debits, credits, tax], ignore_index=True)
+        combined
         .sort_values(EventFact.time, kind="mergesort")
         .assign(**{WealthLog.money: lambda df: df.groupby(WealthLog.agent)["delta"].cumsum()})
         .groupby([WealthLog.agent, EventFact.time])[WealthLog.money]
@@ -66,8 +90,9 @@ def project_wealth(
         .ffill()
     )
 
+    agent_left_types = {AgentLeft.event_name(), LandlordLeft.event_name()}
     departures = (
-        facts.query(f"{EventFact.event_type} == '{AgentLeft.event_name()}'")
+        facts[facts[EventFact.event_type].isin(agent_left_types)]
         .set_index(EventFact.agent_id)[EventFact.time]
     )
     for aid, dep_time in departures.items():
@@ -86,6 +111,6 @@ def project_wealth(
         stacked
         .rename(WealthLog.money)
         .reset_index()
-        .assign(**{WealthLog.agent: lambda df: df[WealthLog.agent].map(agent_names)})
+        .assign(**{WealthLog.agent: lambda df: df[WealthLog.agent].map(agent_names).fillna(df[WealthLog.agent])})
         .pipe(WealthLog.validate)
     )

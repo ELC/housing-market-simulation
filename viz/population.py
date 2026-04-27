@@ -7,21 +7,17 @@ from matplotlib.figure import Figure
 from pandera.typing import DataFrame
 
 from analytics.gold.agent_population.schema import AgentPopulation
-from viz.base import chart
-from viz.fast import downsample_evenly
+from viz.base import chart, set_xlim_with_padding
+from viz.fast import prepare_ci_stats
 
 
 def plot_population(
     data: DataFrame[AgentPopulation],
     figsize: tuple[float, float] = (14, 4),
     max_points: int = 2_000,
+    max_t: float | None = None,
 ) -> tuple[Figure, Axes]:
-    stats = (
-        data[[AgentPopulation.time, "mean", "ci_low", "ci_high"]]
-        .drop_duplicates()
-        .sort_values(AgentPopulation.time, kind="stable")
-    )
-    stats = downsample_evenly(stats, max_rows=max_points, sort_by=AgentPopulation.time)
+    stats = prepare_ci_stats(data, max_rows=max_points, time_col=AgentPopulation.time)
 
     with chart(figsize) as (fig, ax):
         sns.lineplot(
@@ -48,4 +44,5 @@ def plot_population(
         ax.set_ylabel("Number of Agents")
         ax.yaxis.set_major_locator(mticker.MaxNLocator(integer=True))
         ax.legend()
+        set_xlim_with_padding(ax, right=max_t)
     return fig, ax

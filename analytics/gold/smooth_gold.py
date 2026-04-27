@@ -53,4 +53,15 @@ class SmootherTransformer:
 
         _smooth_stats_table(gold, "agent_population", self._smoother, x_col="time")
 
+        _smooth_stats_table(gold, "house_supply", self._smoother, x_col="time")
+        _smooth_stats_table(gold, "landlord_population", self._smoother, x_col="time")
+        _smooth_stats_table(gold, "houses_per_landlord", self._smoother, x_col="time")
+        _smooth_stats_table(gold, "landlord_proportion", self._smoother, x_col="time")
+        _smooth_stats_table(gold, "tenure", self._smoother, x_col="time", group_cols=["kind"])
+        _smooth_stats_table(gold, "landlord_wealth", self._smoother, x_col="time")
+        _smooth_stats_table(gold, "market_balance", self._smoother, x_col="time", group_cols=["metric"])
+        _smooth_stats_table(gold, "rent_to_income", self._smoother, x_col="time")
+        _smooth_stats_table(gold, "house_age", self._smoother, x_col="time")
+        _smooth_stats_table(gold, "demolition_age", self._smoother, x_col="time")
+
         return gold

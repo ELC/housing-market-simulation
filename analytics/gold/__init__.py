@@ -9,7 +9,6 @@ from analytics.gold.rent_duration_rolling import (
     RentDurationRolling,
     build_rent_duration_rolling,
 )
-from analytics.gold.renter_wealth import RenterWealth, build_renter_wealth
 from analytics.gold.smooth_gold import SmootherTransformer
 from analytics.gold.smoother import LOWESSSmoother, Smoother
 from analytics.gold.time_to_rent_rolling import (
@@ -28,7 +27,6 @@ __all__ = [
     "LOWESSSmoother",
     "RentComparison",
     "RentDurationRolling",
-    "RenterWealth",
     "Smoother",
     "SmootherTransformer",
     "TimeToRentRolling",
@@ -38,7 +36,6 @@ __all__ = [
     "build_housed_renter_wealth",
     "build_rent_comparison",
     "build_rent_duration_rolling",
-    "build_renter_wealth",
     "build_time_to_rent_rolling",
     "build_wealth_quartiles",
     "build_wealth_spread",

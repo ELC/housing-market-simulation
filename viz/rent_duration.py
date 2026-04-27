@@ -5,8 +5,8 @@ from pandera.typing import DataFrame
 
 from analytics.gold import RentDurationRolling
 from core.settings import SimulationSettings
-from viz.base import chart
-from viz.fast import downsample_evenly
+from viz.base import chart, mark_first_rent, set_xlim_with_padding, set_ylim_with_padding
+from viz.fast import prepare_ci_stats
 
 
 def plot_rent_duration(
@@ -14,13 +14,10 @@ def plot_rent_duration(
     settings: SimulationSettings | None = None,
     figsize: tuple[float, float] = (14, 4),
     max_points: int = 2_000,
+    max_t: float | None = None,
+    first_rent_time: float | None = None,
 ) -> tuple[Figure, Axes]:
-    stats = (
-        data[[RentDurationRolling.time, "mean", "ci_low", "ci_high"]]
-        .drop_duplicates()
-        .sort_values(RentDurationRolling.time, kind="stable")
-    )
-    stats = downsample_evenly(stats, max_rows=max_points, sort_by=RentDurationRolling.time)
+    stats = prepare_ci_stats(data, max_rows=max_points, time_col=RentDurationRolling.time)
 
     with chart(figsize) as (fig, ax):
         sns.lineplot(
@@ -48,6 +45,8 @@ def plot_rent_duration(
         ax.set_title("Rent Duration (95% CI)")
         ax.set_xlabel("Time")
         ax.set_ylabel("Duration (periods)")
+        mark_first_rent(ax, first_rent_time)
         ax.legend()
-        ax.set_ylim(bottom=0)
+        set_ylim_with_padding(ax)
+        set_xlim_with_padding(ax, right=max_t)
     return fig, ax

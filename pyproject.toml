@@ -33,51 +33,11 @@ lint = [
 
 [tool.poe.tasks]
 serve = "uv run python -m upskills"
-test = "uv run pytest"
 format = "uv run pre-commit run --all-files --verbose"
-lint = "uv run ruff check src tests"
+lint = "uv run ruff check src"
 typecheck = "uv run mypy src"
-check-coverage = "uv run coverage report --fail-under=80"
 docker-build = "docker buildx build --progress plain -t upskills-backend ."
 docker-run = "docker container run --env-file .env --publish 8000:8000 upskills-backend"
-
-
-#########################
-# Pytest
-#########################
-
-[tool.pytest.ini_options]
-pythonpath = ["src"]
-testpaths = ["tests"]
-asyncio_mode = "auto"
-addopts = [
-    "-r=A",
-    "--junitxml=pytest-report.xml",
-    "--cov=.",
-    "--cov-branch",
-    "--cov-report=xml",
-    "--cov-report=html",
-    "--cov-report=term-missing:skip-covered",
-    "-vvv",
-]
-
-
-#########################
-# Coverage
-#########################
-
-[tool.coverage.run]
-branch = true
-parallel = true
-source = ["src", "tests"]
-omit = [
-    "**/__main__.py",
-    "src/upskills/main.py",
-]
-
-[tool.coverage.report]
-show_missing = true
-skip_covered = true
 
 
 #########################

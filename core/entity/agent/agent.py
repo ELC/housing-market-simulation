@@ -29,6 +29,8 @@ class Agent(Entity):
     max_vacancy_periods: float = Field(default_factory=lambda: random.uniform(50, 100))
     max_homeless_periods: float = Field(default_factory=lambda: random.uniform(20, 60))
     homeless_since: float | None = None
+    idle_since: float | None = None
+    max_idle_periods: float = float("inf")
 
     @property
     def depends_on(self) -> frozenset[Signal]:

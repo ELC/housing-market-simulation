@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+import math
 import random
 from typing import TYPE_CHECKING, ClassVar, Never
+
+from pydantic import Field
 
 from core.entity.agent import Agent
 from core.entity.agent.protocol import AgentPolicy
 from core.events.base import ApplyResult, Event
 from core.events.income import AgentIncomeReceived
-from core.events.tax import WealthTaxDeducted
+from core.events.tax import WealthTaxDue
 from core.signals import Signal
 
 if TYPE_CHECKING:
@@ -19,26 +22,32 @@ class AgentEntered(Event):
     agent_id: str
     agent_name: str
     policy: AgentPolicy
+    initial_money: float = Field(
+        default_factory=lambda: random.lognormvariate(math.log(3), 1),
+    )
 
     invalidates: ClassVar[frozenset[Signal]] = frozenset({Signal.HOMELESSNESS, Signal.MARKET_RENT})
 
     def apply(
         self, market: HousingMarket, context: SimulationContext
-    ) -> ApplyResult[AgentIncomeReceived | WealthTaxDeducted | AgentLeft | AgentEntered]:
+    ) -> ApplyResult[AgentIncomeReceived | WealthTaxDue | AgentLeft | AgentEntered]:
         agent = Agent(
             id=self.agent_id,
             name=self.agent_name,
             policy=self.policy,
             homeless_since=self.time,
+            money=self.initial_money,
         )
         new_market = market.update_entities({agent.id: agent})
 
+        gross, net = AgentIncomeReceived.compute_salary(agent)
         income = AgentIncomeReceived(
             time=self.time,
             agent_id=agent.id,
-            amount=AgentIncomeReceived.compute_salary(agent),
+            amount=net,
+            gross_income=gross,
         )
-        tax = WealthTaxDeducted(time=self.time + 1, agent_id=agent.id)
+        tax = WealthTaxDue(time=self.time + 1, agent_id=agent.id)
         left = AgentLeft(
             time=self.time + agent.max_homeless_periods,
             agent_id=agent.id,
@@ -68,8 +77,6 @@ class AgentLeft(Event):
         agent = market.get(self.agent_id, Agent)
         return agent.homeless_since == self.homeless_since
 
-    def apply(
-        self, market: HousingMarket, context: SimulationContext
-    ) -> ApplyResult[Never]:
+    def apply(self, market: HousingMarket, context: SimulationContext) -> ApplyResult[Never]:
         new_market = market.remove_entity(self.agent_id, Agent)
         return new_market, context, []

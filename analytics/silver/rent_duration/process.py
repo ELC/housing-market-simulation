@@ -3,21 +3,18 @@ from pandera.typing import DataFrame
 
 from analytics.bronze.event_facts.schema import EventFact
 from analytics.silver.rent_duration.schema import RentDuration
-from core.entity.agent import Agent
-from core.entity.house import House
 from core.events import Evicted, RentExpired, RentStarted
-from core.market import HousingMarket
 
 
 def project_rent_duration(
     facts: DataFrame[EventFact],
-    initial_market: HousingMarket,
     agent_names: dict[str, str] | None = None,
+    house_names: dict[str, str] | None = None,
 ) -> DataFrame[RentDuration]:
-    houses = initial_market.entities_of_type(House)
-    house_names: dict[str, str] = {h.id: h.name for h in houses}
     if agent_names is None:
-        agent_names = {a.id: a.name for a in initial_market.entities_of_type(Agent)}
+        agent_names = {}
+    if house_names is None:
+        house_names = {}
 
     rent_starts = (
         facts
@@ -40,13 +37,18 @@ def project_rent_duration(
         .assign(rank=lambda df: df.groupby(EventFact.house_id).cumcount())
     )
 
+    merged = rent_starts.merge(rent_ends, on=[EventFact.house_id, "rank"])
+    if merged.empty:
+        return RentDuration.validate(
+            pd.DataFrame(columns=[RentDuration.time, RentDuration.house, RentDuration.tenant, RentDuration.duration])
+        )
+
     return (
-        rent_starts
-        .merge(rent_ends, on=[EventFact.house_id, "rank"])
+        merged
         .assign(**{
             RentDuration.time: lambda df: df["end"],
-            RentDuration.house: lambda df: df[EventFact.house_id].map(house_names),
-            RentDuration.tenant: lambda df: df[EventFact.agent_id].map(agent_names),
+            RentDuration.house: lambda df: df[EventFact.house_id].map(house_names).fillna(df[EventFact.house_id]),
+            RentDuration.tenant: lambda df: df[EventFact.agent_id].map(agent_names).fillna(df[EventFact.agent_id]),
             RentDuration.duration: lambda df: df["end"] - df["start"],
         })[[RentDuration.time, RentDuration.house, RentDuration.tenant, RentDuration.duration]]
         .pipe(RentDuration.validate)

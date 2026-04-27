@@ -133,3 +133,4 @@ _build/
 # Feather persistence cache
 **/feather/
 *.feather
+book/chapters/output/*

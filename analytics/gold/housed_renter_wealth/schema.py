@@ -4,8 +4,10 @@ from pandera.typing import Series
 
 class HousedRenterWealth(pa.DataFrameModel):
     time: Series[float] = pa.Field(ge=0)
-    agent: Series[str]
-    money: Series[float]
+    mean: Series[float] = pa.Field(nullable=True)
+    ci_low: Series[float] = pa.Field(nullable=True)
+    ci_high: Series[float] = pa.Field(nullable=True)
 
     class Config:
         coerce = True
+        strict = False

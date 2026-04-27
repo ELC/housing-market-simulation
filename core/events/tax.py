@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING
 
 from core.entity.agent import Agent
 from core.events.base import ApplyResult, Event
@@ -8,24 +8,48 @@ if TYPE_CHECKING:
     from core.market import HousingMarket
 
 
-class WealthTaxDeducted(Event):
+class WealthTaxDue(Event):
     agent_id: str
-    amount: float = 0.0
 
     def is_valid(self, market: "HousingMarket") -> bool:
         return market.has_entity(self.agent_id, Agent)
 
-    def apply(self, market: "HousingMarket", context: "SimulationContext") -> ApplyResult[Self]:
+    def apply(
+        self, market: "HousingMarket", context: "SimulationContext",
+    ) -> ApplyResult["WealthTaxDeducted | WealthTaxDue"]:
         agent = market.get(self.agent_id, Agent)
+        rate = market.settings.wealth_tax_rate
+        threshold = market.settings.min_taxable_wealth
 
-        if agent.money >= market.settings.min_taxable_wealth:
-            new_money = max(0.0, agent.money - self.amount)
-            updated = agent.model_copy(update={"money": new_money})
-            new_market = market.update_entities({agent.id: updated})
+        if agent.money >= threshold:
+            actual = min(rate * agent.money, max(agent.money, 0.0))
         else:
-            new_money = agent.money
-            new_market = market
+            actual = 0.0
 
-        next_tax = market.settings.wealth_tax_rate * new_money
-        next_event = self.model_copy(update={"time": self.time + 1, "amount": next_tax})
-        return new_market, context, [next_event]
+        new_money = agent.money - actual
+        updated = agent.model_copy(update={"money": new_money})
+        new_market = market.update_entities({agent.id: updated})
+
+        receipt = WealthTaxDeducted(time=self.time, agent_id=agent.id, amount=actual)
+        next_due = WealthTaxDue(time=self.time + 1, agent_id=agent.id)
+        return new_market, context, [receipt, next_due]
+
+
+class WealthTaxDeducted(Event):
+    """Receipt fact: records the actual tax deducted from an agent.
+
+    This event is a pure record emitted by :class:`WealthTaxDue`; its
+    ``apply`` is a no-op so it is faithfully preserved in the event log
+    for analytics reconstruction.
+    """
+
+    agent_id: str
+    amount: float
+
+    def is_valid(self, market: "HousingMarket") -> bool:  # noqa: ARG002, PLR6301
+        return True
+
+    def apply(
+        self, market: "HousingMarket", context: "SimulationContext",
+    ) -> ApplyResult["WealthTaxDeducted"]:
+        return market, context, []

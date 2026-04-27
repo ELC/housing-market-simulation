@@ -166,3 +166,67 @@ def bootstrap_mean_ci_by_group(
         max_resample_size=max_resample_size,
     )
 
+
+_LOGIT_EPS = 1e-6
+
+
+def _logit(x: np.ndarray) -> np.ndarray:
+    return np.log(x / (1.0 - x))
+
+
+def _inv_logit(x: np.ndarray) -> np.ndarray:
+    return 1.0 / (1.0 + np.exp(-x))
+
+
+def bootstrap_logit_ci_by_group(
+    df: DataFrame,
+    *,
+    group_cols: list[str],
+    value_col: str,
+    run_col: str | None = None,
+    stat_col: str = "mean",
+    n_boot: int = 500,
+    ci: float = 95.0,
+    seed: int = 0,
+    max_resample_size: int = 500,
+) -> DataFrame:  # noqa: PLR0913
+    """Bootstrap mean + CI in logit space, then inverse-logit back.
+
+    Use for proportions bounded in (0, 1) so that CI endpoints respect the
+    natural bounds.
+    """
+    work = df.copy()
+    work[value_col] = work[value_col].clip(_LOGIT_EPS, 1.0 - _LOGIT_EPS).pipe(_logit)
+
+    if run_col and run_col in work.columns:
+        per_run = aggregate_across_runs(
+            work, run_col=run_col, group_cols=group_cols, value_col=value_col,
+        )
+        result = _bootstrap_groups(
+            per_run,
+            group_cols=group_cols,
+            value_col=value_col,
+            stat_fn=np.mean,
+            stat_col=stat_col,
+            n_boot=n_boot,
+            ci=ci,
+            seed=seed,
+            max_resample_size=max_resample_size,
+        )
+    else:
+        result = _bootstrap_groups(
+            work,
+            group_cols=group_cols,
+            value_col=value_col,
+            stat_fn=np.mean,
+            stat_col=stat_col,
+            n_boot=n_boot,
+            ci=ci,
+            seed=seed,
+            max_resample_size=max_resample_size,
+        )
+
+    for col in (stat_col, "ci_low", "ci_high"):
+        result[col] = _inv_logit(result[col].to_numpy())
+    return result
+

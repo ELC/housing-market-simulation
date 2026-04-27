@@ -1,7 +1,32 @@
-from __future__ import annotations
+from collections.abc import Sequence
 
 import numpy as np
 import pandas as pd
+
+
+def prepare_ci_stats(
+    data: pd.DataFrame,
+    *,
+    max_rows: int,
+    time_col: str = "time",
+    group_cols: Sequence[str] = (),
+) -> pd.DataFrame:
+    """Select CI columns, dedupe, stable-sort by group/time, and downsample.
+
+    Every gold metric used by the plots in :mod:`viz` shares the same shape
+    (a time column, optional group columns, plus ``mean``/``ci_low``/``ci_high``).
+    This helper performs the standard preparation used at the top of each plot:
+
+    1. Select ``[time_col, *group_cols, "mean", "ci_low", "ci_high"]``.
+    2. Drop duplicates.
+    3. Stable-sort by ``[*group_cols, time_col]`` so each group's series is
+       contiguous and chronological.
+    4. Downsample evenly to at most ``max_rows`` rows.
+    """
+    select = [time_col, *group_cols, "mean", "ci_low", "ci_high"]
+    sort_by: list[str] = [*group_cols, time_col]
+    stats = data[select].drop_duplicates().sort_values(sort_by, kind="stable")
+    return downsample_evenly(stats, max_rows=max_rows, sort_by=sort_by)
 
 
 def downsample_evenly(

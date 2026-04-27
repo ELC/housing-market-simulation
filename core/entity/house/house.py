@@ -25,6 +25,7 @@ class House(Entity):
     state: HouseStateType
     rent_price: float = Field(default_factory=lambda: random.lognormvariate(math.log(15), 0.3))
     age: int = Field(default_factory=lambda: random.randint(1, 20))
+    construction_cost: float = 0.0
 
     def occupant_id(self) -> str | None:
         match self.state:

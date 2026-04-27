@@ -11,21 +11,23 @@ from core.events import (
     AgentLeft,
     AuctionClear,
     Bid,
+    ConstructionCheck,
     EventType,
     Evicted,
     HouseAged,
+    HouseBuilt,
     HouseDemolished,
-    HouseRebuilt,
-    ReconstructionCheck,
+    LandlordArrival,
+    LandlordEntered,
+    LandlordLeft,
+    MaintenanceDue,
     RentCollected,
     RentDue,
     RentExpired,
     RentStarted,
     WealthTaxDeducted,
+    WealthTaxDue,
 )
-from core.market import HousingMarket
-
-
 class EventRow(TypedDict):
     time: float
     event_type: str
@@ -92,21 +94,13 @@ def event_to_row(event: EventType) -> EventRow | None:  # noqa: PLR0911
                 house_id=hid,
                 amount=None,
             )
-        case HouseDemolished(time=t, house_id=hid):
+        case HouseDemolished(time=t, house_id=hid, age=a):
             return EventRow(
                 time=t,
                 event_type=event.event_name(),
                 agent_id=None,
                 house_id=hid,
-                amount=None,
-            )
-        case HouseRebuilt(time=t, house_id=hid, construction_time=ct):
-            return EventRow(
-                time=t,
-                event_type=event.event_name(),
-                agent_id=None,
-                house_id=hid,
-                amount=float(ct),
+                amount=float(a),
             )
         case HouseAged(time=t, house_id=hid):
             return EventRow(
@@ -116,21 +110,53 @@ def event_to_row(event: EventType) -> EventRow | None:  # noqa: PLR0911
                 house_id=hid,
                 amount=None,
             )
-        case ReconstructionCheck(time=t, house_id=hid, cost=c):
+        case ConstructionCheck(time=t, landlord_id=lid):
+            return EventRow(
+                time=t,
+                event_type=event.event_name(),
+                agent_id=lid,
+                house_id=None,
+                amount=None,
+            )
+        case HouseBuilt(time=t, landlord_id=lid, house_id=hid, cost=c):
+            return EventRow(
+                time=t,
+                event_type=event.event_name(),
+                agent_id=lid,
+                house_id=hid,
+                amount=c,
+            )
+        case MaintenanceDue(time=t, house_id=hid):
             return EventRow(
                 time=t,
                 event_type=event.event_name(),
                 agent_id=None,
                 house_id=hid,
-                amount=c,
+                amount=None,
             )
-        case AgentEntered(time=t, agent_id=aid):
+        case LandlordEntered(time=t, agent_id=aid, initial_money=m):
+            return EventRow(
+                time=t,
+                event_type=event.event_name(),
+                agent_id=aid,
+                house_id=None,
+                amount=m,
+            )
+        case LandlordLeft(time=t, agent_id=aid):
             return EventRow(
                 time=t,
                 event_type=event.event_name(),
                 agent_id=aid,
                 house_id=None,
                 amount=None,
+            )
+        case AgentEntered(time=t, agent_id=aid, initial_money=m):
+            return EventRow(
+                time=t,
+                event_type=event.event_name(),
+                agent_id=aid,
+                house_id=None,
+                amount=m,
             )
         case AgentLeft(time=t, agent_id=aid):
             return EventRow(
@@ -148,14 +174,11 @@ def event_to_row(event: EventType) -> EventRow | None:  # noqa: PLR0911
                 house_id=None,
                 amount=amt,
             )
-        case RentDue():
+        case RentDue() | LandlordArrival() | WealthTaxDue():
             return None
 
 
-def build_fact_table(
-    event_log: Sequence[EventType],
-    initial_market: HousingMarket,
-) -> DataFrame[EventFact]:
+def build_fact_table(event_log: Sequence[EventType]) -> DataFrame[EventFact]:
     rows = [r for e in event_log if (r := event_to_row(e))]
     df = pd.DataFrame(rows)
     return EventFact.validate(df.reset_index(drop=True))

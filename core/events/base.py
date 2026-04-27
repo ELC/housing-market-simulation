@@ -29,6 +29,4 @@ class Event(FrozenModel, ABC):
         return True
 
     @abstractmethod
-    def apply(
-        self, market: HousingMarket, context: SimulationContext
-    ) -> ApplyResult[Event]: ...
+    def apply(self, market: HousingMarket, context: SimulationContext) -> ApplyResult[Event]: ...

@@ -6,10 +6,10 @@ from pydantic import ConfigDict, Field
 from core.base import FrozenModel
 from core.context import SimulationContext
 from core.engine.queue import EventQueue
+from .result import RunResult
 from core.events import EventType
 from core.market import HousingMarket
 from core.registry import SignalRegistry
-from core.engine.result import RunResult
 
 
 class SimulationEngine(FrozenModel):
@@ -22,7 +22,7 @@ class SimulationEngine(FrozenModel):
     now: float = 0.0
     event_log: MutableSequence[EventType] = Field(default_factory=list[EventType])
 
-    def run(self, *, n_steps: int, max_t: float, landlord_name: str) -> RunResult:
+    def run(self, *, n_steps: int, max_t: float) -> RunResult:
         sim = self
         for _ in range(n_steps):
             if not sim.queue.events:
@@ -32,8 +32,7 @@ class SimulationEngine(FrozenModel):
                 break
         return RunResult(
             event_log=list(sim.event_log),
-            market=sim.market,
-            landlord_name=landlord_name,
+            settings=sim.market.settings,
         )
 
     def step(self) -> Self:

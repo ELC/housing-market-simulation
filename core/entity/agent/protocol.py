@@ -26,6 +26,15 @@ class AgentPolicy(FrozenModel):
     ) -> list[EventType]: ...
 
 
+class PassiveLandlordPolicy(AgentPolicy):
+    @property
+    def depends_on(self) -> frozenset[Signal]:
+        return frozenset()
+
+    def decide(self, agent: "Agent", market: "HousingMarket", now: float) -> list[EventType]:
+        return []
+
+
 class CompositeAgentPolicy(AgentPolicy):
     policies: tuple[AgentPolicy, ...]
 

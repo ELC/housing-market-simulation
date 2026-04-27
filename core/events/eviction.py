@@ -19,6 +19,9 @@ class Evicted(Event):
 
     invalidates: ClassVar[frozenset[Signal]] = frozenset({Signal.HOMELESSNESS, Signal.MARKET_RENT})
 
+    def is_valid(self, market: "HousingMarket") -> bool:
+        return market.has_entity(self.house_id, House) and market.has_entity(self.tenant_id, Agent)
+
     def apply(self, market: "HousingMarket", context: "SimulationContext") -> ApplyResult[AgentLeft]:
         house = market.get(self.house_id, House)
         tenant = market.get(self.tenant_id, Agent)

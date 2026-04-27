@@ -6,7 +6,9 @@ from typing import TYPE_CHECKING, ClassVar, Self
 
 from core.entity.agent import Agent
 from core.entity.house import ConstructionState, House, VacantState
+from core.events.aging import HouseAged
 from core.events.base import ApplyResult, Event
+from core.events.maintenance import MaintenanceDue
 from core.events.rent import RentStarted
 from core.signals import Signal
 
@@ -19,10 +21,12 @@ if TYPE_CHECKING:
 class AuctionClear(Event):
     invalidates: ClassVar[frozenset[Signal]] = frozenset({Signal.MARKET_RENT, Signal.HOMELESSNESS})
 
-    def apply(self, market: HousingMarket, context: SimulationContext) -> ApplyResult[Self | RentStarted]:
+    def apply(
+        self, market: HousingMarket, context: SimulationContext,
+    ) -> ApplyResult[Self | RentStarted | HouseAged | MaintenanceDue]:
         bids_by_house = self._group_bids(context)
         updated_houses: dict[str, House] = {}
-        events: list[Self | RentStarted] = []
+        events: list[Self | RentStarted | HouseAged | MaintenanceDue] = []
         matched: set[str] = {occ for h in market.entities_of_type(House) if (occ := h.occupant_id())}
 
         for house in market.entities_of_type(House):
@@ -32,9 +36,23 @@ class AuctionClear(Event):
                     updated_houses[house.id] = house.model_copy(update={"rent_price": new_rent})
                     events.extend(vacant_events)
 
+                case ConstructionState() as state if state.remaining_time <= 0:
+                    updated_houses[house.id] = house.model_copy(
+                        update={"state": VacantState(last_update_time=self.time)},
+                    )
+                    events.append(HouseAged(
+                        time=self.time + market.settings.aging_interval,
+                        house_id=house.id,
+                    ))
+                    events.append(MaintenanceDue(
+                        time=self.time + 1,
+                        house_id=house.id,
+                    ))
+
                 case ConstructionState() as state:
-                    new_state = self._handle_construction(state)
-                    updated_houses[house.id] = house.model_copy(update={"state": new_state})
+                    updated_houses[house.id] = house.model_copy(
+                        update={"state": ConstructionState(remaining_time=state.remaining_time - 1)},
+                    )
 
                 case _:
                     pass
@@ -80,8 +98,3 @@ class AuctionClear(Event):
         rent_event = RentStarted(time=self.time, house_id=house.id, tenant_id=winner.agent_id)
 
         return clearing_price, [rent_event]
-
-    def _handle_construction(self, state: ConstructionState) -> VacantState | ConstructionState:
-        if state.remaining_time <= 0:
-            return VacantState(last_update_time=self.time)
-        return ConstructionState(remaining_time=state.remaining_time - 1)

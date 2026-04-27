@@ -3,16 +3,10 @@ from pandera.typing import DataFrame
 
 from analytics.bronze.event_facts.schema import EventFact
 from analytics.silver.population.schema import PopulationLog
-from core.entity import Agent
 from core.events import AgentEntered, AgentLeft
-from core.market import HousingMarket
 
 
-def project_population(
-    facts: DataFrame[EventFact],
-    market: HousingMarket,
-) -> DataFrame[PopulationLog]:
-    initial_agent_count = len(market.entities_of_type(Agent))
+def project_population(facts: DataFrame[EventFact]) -> DataFrame[PopulationLog]:
     event_times: list[float] = sorted(facts[EventFact.time].unique())
 
     entries = (
@@ -34,9 +28,7 @@ def project_population(
     else:
         combined = combined.reindex(event_times, fill_value=0)
 
-    combined["count"] = initial_agent_count + (
-        combined["entered"] - combined["left"]
-    ).cumsum()
+    combined["count"] = (combined["entered"] - combined["left"]).cumsum()
 
     return (
         combined

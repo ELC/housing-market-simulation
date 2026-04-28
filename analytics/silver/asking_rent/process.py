@@ -1,5 +1,18 @@
+"""Per-house asking-rent log.
+
+The algorithm is intrinsically sequential — at each auction, the rent
+for a house that *stayed vacant* decays, and the rent for a house that
+*just got occupied* jumps to the clearing price — so it cannot be fully
+vectorised. We do, however, push every per-time-step inner operation
+down to numpy: occupancy and on-market state become 2-D boolean masks
+indexed as ``[time_idx, house_idx]``, so the time loop becomes O(T)
+instead of O(T·H) scalar pandas lookups.
+"""
+from __future__ import annotations
+
 import math
 
+import numpy as np
 import pandas as pd
 from pandera.typing import DataFrame
 
@@ -16,7 +29,11 @@ from core.events import (
 )
 from core.settings import SimulationSettings
 
-_OFF_MARKET = {"construction", "demolished"}
+
+def _empty() -> DataFrame[HouseRentLog]:
+    return HouseRentLog.validate(
+        pd.DataFrame(columns=[HouseRentLog.time, HouseRentLog.house, HouseRentLog.rent]),
+    )
 
 
 def project_asking_rent(
@@ -28,116 +45,133 @@ def project_asking_rent(
     if house_names is None:
         house_names = {}
 
-    house_ids: list[str] = []
-    rent: dict[str, float] = {}
+    et = EventFact.event_type
+    eft = EventFact.time
+    eh = EventFact.house_id
+    ea = EventFact.agent_id
+    eamt = EventFact.amount
 
-    built_rows = facts.query(f"{EventFact.event_type} == '{HouseBuilt.event_name()}'")
-    for _, row in built_rows.iterrows():
-        hid = row[EventFact.house_id]
-        if hid and hid not in rent:
-            house_ids.append(hid)
-            house_names.setdefault(hid, hid)
-            rent[hid] = row[EventFact.amount] / max(1, settings.max_construction_time)
-
-    starts = facts.query(f"{EventFact.event_type} == '{RentStarted.event_name()}'")[
-        [EventFact.time, EventFact.house_id, EventFact.agent_id]
-    ]
-    evicts = facts.query(f"{EventFact.event_type} == '{Evicted.event_name()}'")[[EventFact.time, EventFact.house_id]]
-    expired = facts.query(f"{EventFact.event_type} == '{RentExpired.event_name()}'")[[EventFact.time, EventFact.house_id]]
+    type_idx = facts[et]
+    built_rows = facts[type_idx == HouseBuilt.event_name()]
+    starts = facts[type_idx == RentStarted.event_name()][[eft, eh, ea]]
+    evicts = facts[type_idx == Evicted.event_name()][[eft, eh]]
+    expired = facts[type_idx == RentExpired.event_name()][[eft, eh]]
     vacated = pd.concat([evicts, expired], ignore_index=True)
-    demolished = facts.query(f"{EventFact.event_type} == '{HouseDemolished.event_name()}'")[[EventFact.time, EventFact.house_id]]
+    demolished = facts[type_idx == HouseDemolished.event_name()][[eft, eh]]
 
-    built_occ = (
-        built_rows[[EventFact.time, EventFact.house_id]]
-        .assign(occupant="construction")
-    )
+    rent_init: dict[str, float] = {}
+    built_h = built_rows[eh].to_numpy()
+    built_a = built_rows[eamt].to_numpy()
+    for hid, amt in zip(built_h, built_a, strict=False):
+        if hid and hid not in rent_init:
+            house_names.setdefault(hid, hid)
+            rent_init[hid] = float(amt) / max(1, settings.max_construction_time)
+
+    built_occ = built_rows[[eft, eh]].assign(occupant="construction")
+    starts_occ = starts.rename(columns={ea: "occupant"})
+    vacated_occ = vacated.assign(occupant="vacant")
+    demolished_occ = demolished.assign(occupant="demolished")
 
     occ_events = pd.concat(
-        [
-            starts.rename(columns={EventFact.agent_id: "occupant"}),
-            vacated.assign(occupant="vacant"),
-            demolished.assign(occupant="demolished"),
-            built_occ,
-        ],
-        ignore_index=True,
-    ).sort_values(EventFact.time)
+        [starts_occ, vacated_occ, demolished_occ, built_occ], ignore_index=True,
+    ).sort_values(eft, kind="mergesort")
 
     if occ_events.empty:
-        return HouseRentLog.validate(
-            pd.DataFrame(columns=[HouseRentLog.time, HouseRentLog.house, HouseRentLog.rent])
-        )
+        return _empty()
 
-    event_times: list[float] = sorted(facts[EventFact.time].unique())
-
-    all_house_ids = list(set(house_ids) | set(occ_events[EventFact.house_id].dropna().unique()))
+    event_times = np.sort(facts[eft].unique())
 
     occ_wide = (
         occ_events
-        .groupby([EventFact.house_id, EventFact.time])["occupant"]
+        .groupby([eh, eft])["occupant"]
         .last()
-        .unstack(EventFact.house_id)
+        .unstack(eh)
         .reindex(event_times)
         .ffill()
     )
 
-    auction_set: set[float] = set(
-        facts.query(f"{EventFact.event_type} == '{AuctionClear.event_name()}'")[EventFact.time]
-    )
-    eviction_dict = vacated.groupby(EventFact.time)[EventFact.house_id].apply(set).to_dict()
+    house_ids: list[str] = list(occ_wide.columns)
+    h_index = {h: i for i, h in enumerate(house_ids)}
+    H = len(house_ids)
+    T = len(event_times)
+    if H == 0 or T == 0:
+        return _empty()
 
-    clearing = starts[[EventFact.time, EventFact.house_id]].merge(
-        facts.query(f"{EventFact.event_type} == '{RentCollected.event_name()}'"),
-        on=[EventFact.time, EventFact.house_id],
+    occ_arr = occ_wide.to_numpy()
+    nan_mask = pd.isna(occ_arr)
+    vacant_mask = (occ_arr == "vacant")
+    construction_mask = (occ_arr == "construction")
+    demolished_mask = (occ_arr == "demolished")
+    on_market_mask = ~(construction_mask | demolished_mask | nan_mask)
+
+    auction_set = set(facts.loc[type_idx == AuctionClear.event_name(), eft].to_numpy().tolist())
+    auction_at_t = np.fromiter(
+        (float(t) in auction_set for t in event_times), dtype=bool, count=T,
     )
-    clearing_prices: dict[tuple[float, str], float] = dict(
-        zip(
-            zip(clearing[EventFact.time], clearing[EventFact.house_id], strict=False),
-            clearing[EventFact.amount],
+
+    time_to_idx = {float(t): i for i, t in enumerate(event_times)}
+
+    evict_mask = np.zeros((T, H), dtype=bool)
+    if not vacated.empty:
+        for t, hid in zip(vacated[eft].to_numpy(), vacated[eh].to_numpy(), strict=False):
+            ti = time_to_idx.get(float(t))
+            hi = h_index.get(hid)
+            if ti is not None and hi is not None:
+                evict_mask[ti, hi] = True
+
+    rent_collected = facts[type_idx == RentCollected.event_name()]
+    clearing = starts[[eft, eh]].merge(rent_collected, on=[eft, eh])
+    clearing_arr = np.full((T, H), np.nan)
+    if not clearing.empty:
+        for t, hid, amt in zip(
+            clearing[eft].to_numpy(),
+            clearing[eh].to_numpy(),
+            clearing[eamt].to_numpy(),
             strict=False,
-        )
-    )
+        ):
+            ti = time_to_idx.get(float(t))
+            hi = h_index.get(hid)
+            if ti is not None and hi is not None:
+                clearing_arr[ti, hi] = float(amt)
 
-    active_ids = [hid for hid in all_house_ids if hid in occ_wide.columns]
+    rent_vec = np.zeros(H)
+    for hid, val in rent_init.items():
+        if hid in h_index:
+            rent_vec[h_index[hid]] = val
 
-    rows = list[dict[str, float | str]]()
-    prev_vacant: set[str] = set()
+    rent_arr = np.zeros((T, H))
+    prev_vac = np.zeros(H, dtype=bool)
 
-    for t in event_times:
-        curr_vacant: set[str] = set()
-        on_market: set[str] = set()
-        for hid in active_ids:
-            if hid not in occ_wide.columns:
-                continue
-            val = occ_wide[hid].get(t)
-            if pd.isna(val):
-                continue
-            if val == "vacant":
-                curr_vacant.add(hid)
-            if val not in _OFF_MARKET:
-                on_market.add(hid)
+    for ti in range(T):
+        curr_vac = vacant_mask[ti]
+        if auction_at_t[ti]:
+            was_vacant = prev_vac | evict_mask[ti]
+            decay_mask = was_vacant & curr_vac
+            if decay_mask.any():
+                rent_vec[decay_mask] *= decay
+            newly_occ = was_vacant & ~curr_vac
+            if newly_occ.any():
+                cp = clearing_arr[ti]
+                cp_valid = newly_occ & ~np.isnan(cp)
+                if cp_valid.any():
+                    rent_vec[cp_valid] = cp[cp_valid]
 
-        if t in auction_set:
-            was_vacant = prev_vacant | eviction_dict.get(t, set[str]())
-            for hid in was_vacant & curr_vacant:
-                if hid in rent:
-                    rent[hid] *= decay
-            for hid in was_vacant - curr_vacant:
-                if (t, hid) in clearing_prices:
-                    rent[hid] = clearing_prices[t, hid]
+        rent_arr[ti] = rent_vec
+        prev_vac = curr_vac
 
-        rows.extend(
-            {
-                HouseRentLog.time: t,
-                HouseRentLog.house: house_names.get(hid, hid),
-                HouseRentLog.rent: rent.get(hid, 0.0),
-            }
-            for hid in on_market
-        )
+    rows_t, rows_h = np.where(on_market_mask)
+    if rows_t.size == 0:
+        return _empty()
 
-        prev_vacant = curr_vacant
+    times_out = event_times[rows_t]
+    house_arr = np.array(house_ids, dtype=object)
+    house_ids_out = house_arr[rows_h]
+    rents_out = rent_arr[rows_t, rows_h]
+    names_out = np.array([house_names.get(h, h) for h in house_ids_out], dtype=object)
 
-    if not rows:
-        return HouseRentLog.validate(
-            pd.DataFrame(columns=[HouseRentLog.time, HouseRentLog.house, HouseRentLog.rent])
-        )
-    return HouseRentLog.validate(pd.DataFrame(rows))
+    out = pd.DataFrame({
+        HouseRentLog.time: times_out,
+        HouseRentLog.house: names_out,
+        HouseRentLog.rent: rents_out,
+    })
+    return HouseRentLog.validate(out)

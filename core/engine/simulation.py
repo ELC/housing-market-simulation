@@ -37,29 +37,37 @@ class SimulationEngine(FrozenModel):
 
     def step(self) -> Self:
         event, queue = self.queue.pop()
+        self.queue = queue
+        self.now = event.time
 
         if not event.is_valid(self.market):
-            return self.model_copy(update={"queue": queue, "now": event.time})
+            return self
 
         market, context, emitted = event.apply(self.market, self.context)
-        invalid = self.registry.propagate(event.invalidates)
+        self.market = market
+        self.context = context
 
-        new_events = list[EventType](emitted)
+        for e in emitted:
+            queue.push(e)
+
+        # Most events have ``invalidates=frozenset()`` (the base default), so
+        # the propagation closure is empty and no entity can possibly react.
+        # Short-circuiting here avoids touching every entity's ``depends_on``
+        # on the hot path.
+        if not event.invalidates:
+            self.event_log.append(event)
+            return self
+
+        invalid = self.registry.propagate(event.invalidates)
+        if not invalid:
+            self.event_log.append(event)
+            return self
 
         for entity in market.all_entities():
-            if entity.depends_on & invalid:
-                decisions = entity.decide(market, event.time)
-                new_events.extend(decisions)
-
-        for e in new_events:
-            queue = queue.push(e)
+            if not entity.depends_on & invalid:
+                continue
+            for decision in entity.decide(market, event.time):
+                queue.push(decision)
 
         self.event_log.append(event)
-        return self.model_copy(
-            update={
-                "market": market,
-                "queue": queue,
-                "context": context,
-                "now": event.time,
-            }
-        )
+        return self

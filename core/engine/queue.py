@@ -1,23 +1,25 @@
 import heapq
-from collections.abc import Sequence
+from collections.abc import Iterator
+from itertools import count
 from typing import Self
 
-from core.base import FrozenModel
+from pydantic import BaseModel, ConfigDict, Field
+
 from core.events import EventType
 
 QueueItem = tuple[float, int, EventType]
 
 
-class EventQueue(FrozenModel):
-    events: Sequence[QueueItem] = ()
-    counter: int = 0
+class EventQueue(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    events: list[QueueItem] = Field(default_factory=list[QueueItem])
+    counter: Iterator[int] = Field(default_factory=count)
 
     def push(self, e: EventType) -> Self:
-        items = list(self.events)
-        heapq.heappush(items, (e.time, self.counter, e))
-        return self.model_copy(update={"events": tuple(items), "counter": self.counter + 1})
+        heapq.heappush(self.events, (e.time, next(self.counter), e))
+        return self
 
     def pop(self) -> tuple[EventType, Self]:
-        items = list(self.events)
-        _, _, event = heapq.heappop(items)
-        return event, self.model_copy(update={"events": tuple(items)})
+        _, _, event = heapq.heappop(self.events)
+        return event, self

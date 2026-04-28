@@ -1,3 +1,19 @@
+"""Per-house age over time, reconstructed from the event log.
+
+For each house we have:
+
+- one ``HouseBuilt`` event setting age to 0 at construction completion;
+- a sequence of ``HouseAged`` events, each incrementing age by 1;
+- optionally one ``HouseDemolished`` event that ends the timeline.
+
+We collapse those into one ``(time, house, age)`` row per age change, then
+``merge_asof`` against the cartesian grid of ``(event_times × houses)`` to
+forward-fill age between events. Finally, we mask out rows past each
+house's demolition time.
+"""
+from __future__ import annotations
+
+import numpy as np
 import pandas as pd
 from pandera.typing import DataFrame
 
@@ -6,83 +22,88 @@ from analytics.silver.house_age.schema import HouseAgeLog
 from core.events import HouseAged, HouseBuilt, HouseDemolished
 
 
+def _empty() -> DataFrame[HouseAgeLog]:
+    return HouseAgeLog.validate(
+        pd.DataFrame(columns=[HouseAgeLog.time, HouseAgeLog.house, HouseAgeLog.age]),
+    )
+
+
 def project_house_age(facts: DataFrame[EventFact]) -> DataFrame[HouseAgeLog]:
-    event_times: list[float] = sorted(facts[EventFact.time].unique())
+    type_idx = facts[EventFact.event_type]
 
-    age_events: list[dict] = []
+    built = facts.loc[
+        type_idx == HouseBuilt.event_name(),
+        [EventFact.time, EventFact.house_id],
+    ].copy()
+    built = built.dropna(subset=[EventFact.house_id])
+    if built.empty:
+        return _empty()
 
-    built_rows = facts.query(f"{EventFact.event_type} == '{HouseBuilt.event_name()}'")
-    for _, row in built_rows.iterrows():
-        hid = row[EventFact.house_id]
-        if hid:
-            age_events.append({
-                EventFact.time: row[EventFact.time],
-                EventFact.house_id: hid,
-                "age": 0.0,
-            })
+    aged = facts.loc[
+        type_idx == HouseAged.event_name(),
+        [EventFact.time, EventFact.house_id],
+    ].copy()
+    aged = aged.dropna(subset=[EventFact.house_id])
 
-    aged_rows = facts.query(f"{EventFact.event_type} == '{HouseAged.event_name()}'")
-    for _, row in aged_rows.iterrows():
-        hid = row[EventFact.house_id]
-        if hid:
-            age_events.append({
-                EventFact.time: row[EventFact.time],
-                EventFact.house_id: hid,
-                "age_increment": True,
-            })
+    demolished = facts.loc[
+        type_idx == HouseDemolished.event_name(),
+        [EventFact.time, EventFact.house_id],
+    ].dropna(subset=[EventFact.house_id])
 
-    demolished_rows = facts.query(f"{EventFact.event_type} == '{HouseDemolished.event_name()}'")
-    demolished_map: dict[str, float] = {}
-    for _, row in demolished_rows.iterrows():
-        hid = row[EventFact.house_id]
-        if hid:
-            demolished_map[hid] = row[EventFact.time]
+    house_ids: list[str] = list(pd.unique(built[EventFact.house_id]))
+    if not house_ids:
+        return _empty()
 
-    all_house_ids = {evt[EventFact.house_id] for evt in age_events}
+    built["age"] = 0.0
+    if not aged.empty:
+        aged = aged.sort_values([EventFact.house_id, EventFact.time], kind="mergesort")
+        aged["age"] = aged.groupby(EventFact.house_id, sort=False).cumcount() + 1
+        aged["age"] = aged["age"].astype(float)
+        age_updates = pd.concat([built, aged], ignore_index=True)
+    else:
+        age_updates = built
 
-    if not all_house_ids:
-        return HouseAgeLog.validate(
-            pd.DataFrame(columns=[HouseAgeLog.time, HouseAgeLog.house, HouseAgeLog.age])
-        )
+    age_updates = (
+        age_updates
+        .sort_values(EventFact.time, kind="mergesort")
+        .reset_index(drop=True)
+    )
+    age_updates[EventFact.time] = age_updates[EventFact.time].astype(float)
 
-    current_age: dict[str, float | None] = {hid: None for hid in all_house_ids}
-    sorted_events = sorted(age_events, key=lambda e: e[EventFact.time])
-    age_at_time: dict[str, dict[float, float]] = {hid: {} for hid in all_house_ids}
+    event_times = np.sort(facts[EventFact.time].astype(float).unique())
+    grid = pd.DataFrame({
+        EventFact.time: np.repeat(event_times, len(house_ids)),
+        EventFact.house_id: np.tile(house_ids, len(event_times)),
+    })
+    grid[EventFact.time] = grid[EventFact.time].astype(float)
+    grid = grid.sort_values(EventFact.time, kind="mergesort").reset_index(drop=True)
 
-    for evt in sorted_events:
-        hid = evt[EventFact.house_id]
-        t = evt[EventFact.time]
-        if "age" in evt:
-            current_age[hid] = evt["age"]
-        elif "age_increment" in evt and current_age[hid] is not None:
-            current_age[hid] += 1.0  # type: ignore[operator]
+    merged = pd.merge_asof(
+        grid,
+        age_updates,
+        on=EventFact.time,
+        by=EventFact.house_id,
+        direction="backward",
+    )
+    merged = merged.dropna(subset=["age"])
+    if merged.empty:
+        return _empty()
 
-        if current_age[hid] is not None:
-            age_at_time[hid][t] = current_age[hid]  # type: ignore[assignment]
+    if not demolished.empty:
+        dem_map = dict(zip(
+            demolished[EventFact.house_id].to_numpy(),
+            demolished[EventFact.time].astype(float).to_numpy(),
+            strict=False,
+        ))
+        dem_times = merged[EventFact.house_id].map(dem_map).to_numpy(dtype=float, na_value=np.inf)
+        merged = merged[merged[EventFact.time].to_numpy() <= dem_times]
 
-    rows: list[dict] = []
-    for hid in all_house_ids:
-        dem_t = demolished_map.get(hid, float("inf"))
-        if not age_at_time[hid]:
-            continue
+    if merged.empty:
+        return _empty()
 
-        all_times = sorted(age_at_time[hid].keys())
-        cur_age = None
-        time_idx = 0
-        for t in event_times:
-            while time_idx < len(all_times) and all_times[time_idx] <= t:
-                cur_age = age_at_time[hid][all_times[time_idx]]
-                time_idx += 1
-            if cur_age is not None and t <= dem_t:
-                rows.append({
-                    HouseAgeLog.time: t,
-                    HouseAgeLog.house: hid,
-                    HouseAgeLog.age: cur_age,
-                })
-
-    if not rows:
-        return HouseAgeLog.validate(
-            pd.DataFrame(columns=[HouseAgeLog.time, HouseAgeLog.house, HouseAgeLog.age])
-        )
-
-    return HouseAgeLog.validate(pd.DataFrame(rows))
+    out = pd.DataFrame({
+        HouseAgeLog.time: merged[EventFact.time].to_numpy(),
+        HouseAgeLog.house: merged[EventFact.house_id].to_numpy(),
+        HouseAgeLog.age: merged["age"].to_numpy(),
+    })
+    return HouseAgeLog.validate(out)

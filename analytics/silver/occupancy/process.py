@@ -79,7 +79,7 @@ def project_occupancy(
         .reset_index()
         .assign(**{
             OccupancyLog.house: lambda df: df[OccupancyLog.house].map(house_names).fillna(df[OccupancyLog.house]),
-            OccupancyLog.occupant: lambda df: df[OccupancyLog.occupant].replace(agent_names),
+            OccupancyLog.occupant: lambda df: df[OccupancyLog.occupant].map(agent_names).fillna(df[OccupancyLog.occupant]),
         })
         .pipe(OccupancyLog.validate)
     )
